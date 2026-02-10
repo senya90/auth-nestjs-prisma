@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { AuthMethod } from '@prisma/__generated__/enums'
 import { hash } from 'argon2'
 
-import { PrismaService } from '@/prisma/prisma.service'
+import { AuthMethod } from '../__generated__/enums.js'
+import { PrismaService } from '../prisma/prisma.service.js'
 
 @Injectable()
 export class UserService {

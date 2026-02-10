@@ -4,17 +4,16 @@ import { NestFactory } from '@nestjs/core'
 import { RedisStore } from 'connect-redis'
 import cookieParser from 'cookie-parser'
 import session from 'express-session'
-import IORedis from 'ioredis'
+import { Redis as IORedis } from 'ioredis'
 import ms, { StringValue } from 'ms'
 
-import { parseBoolean } from '@/libs/common/utils/boolean/boolean.util'
-
-import { AppModule } from './app.module'
+import { AppModule } from './app.module.js'
+import { parseBoolean } from './libs/common/utils/boolean/boolean.util.js'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   const config = app.get(ConfigService)
-  const redis = new IORedis(config.getOrThrow('REDIS_URI'))
+  // const redis = new IORedis(config.getOrThrow('REDIS_URI'))
 
   app.use(cookieParser(config.getOrThrow<string>('COOKIE_SECRET')))
   app.useGlobalPipes(
@@ -40,11 +39,11 @@ async function bootstrap() {
         httpOnly: parseBoolean(config.getOrThrow<string>('SESSION_HTTP_ONLY')),
         secure: parseBoolean(config.getOrThrow<string>('SESSION_SECURE')),
         sameSite: 'lax'
-      },
-      store: new RedisStore({
-        client: redis,
-        prefix: config.getOrThrow<string>('SESSION_FOLDER')
-      })
+      }
+      // store: new RedisStore({
+      //   client: redis,
+      //   prefix: config.getOrThrow<string>('SESSION_FOLDER')
+      // })
     })
   )
 
