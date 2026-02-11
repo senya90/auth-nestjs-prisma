@@ -1,18 +1,23 @@
 import { ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
-import { RedisStore } from 'connect-redis'
+// import { RedisStore } from 'connect-redis'
 import cookieParser from 'cookie-parser'
 import session from 'express-session'
-import { Redis as IORedis } from 'ioredis'
+// import { Redis as IORedis } from 'ioredis'
 import ms, { StringValue } from 'ms'
+import { WinstonModule } from 'nest-winston'
 
 import { AppModule } from './app.module.js'
 import { parseBoolean } from './libs/common/utils/boolean/boolean.util.js'
+import { winstonConfig } from './logger/logger.config.js'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   const config = app.get(ConfigService)
+  const logger = WinstonModule.createLogger(winstonConfig(config))
+  app.useLogger(logger)
+
   // const redis = new IORedis(config.getOrThrow('REDIS_URI'))
 
   app.use(cookieParser(config.getOrThrow<string>('COOKIE_SECRET')))
@@ -47,7 +52,9 @@ async function bootstrap() {
     })
   )
 
-  await app.listen(config.getOrThrow<number>('AUTH_SERVICE_PORT'))
+  const port = config.getOrThrow<number>('AUTH_SERVICE_PORT')
+  await app.listen(port)
+  logger.log(`Server started on :${port}`)
 }
 
 bootstrap()
