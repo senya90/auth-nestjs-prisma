@@ -10,95 +10,108 @@ datasource db {
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
-  passwordHash String?
-  displayName  String
+  passwordHash String?    @map("password_hash")
+  displayName  String     @map("display_name")
   picture      String
-  isVerified   Boolean    @default(false)
+  isVerified   Boolean    @default(false) @map("is_verified")
   method       AuthMethod
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
   accounts     Account[]
   sessions     Session[]
   userRoles    UserRole[]
-  refreshTokes RefreshToke[]
+  refreshTokes RefreshToken[]
+
+  @@map("users")
 }
 
 model Account {
   id           String    @id @default(uuid())
-  userId       String
+  userId       String    @map("user_id")
   prodiver     String // 'google', 'github'
-  providerId   String // id от провайдера
-  accessToken  String?
-  refreshToken String?
-  expiresAt    DateTime?
-  createdAt    DateTime? @default(now())
-  updatedAt    DateTime  @updatedAt
+  providerId   String    @map("provider_id") // id от провайдера 
+  accessToken  String?   @map("access_token")
+  refreshToken String?   @map("refresh_token")
+  expiresAt    DateTime? @map("expires_at")
+  createdAt    DateTime? @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([prodiver, providerId])
+  @@map("accounts")
 }
 
 model Session {
   id           String   @id @default(uuid())
-  userId       String
-  sessionToken String   @unique
-  expiresAt    DateTime
+  userId       String   @map("user_id")
+  sessionToken String   @unique @map("session_token")
   data         Json?
-  createdAt    DateTime @default(now())
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id])
+
+  @@map("session")
 }
 
 model Role {
   id          String   @id @default(uuid())
   name        String   @unique
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   users           UserRole[]
   rolePermissions RolePermission[]
+
+  @@map("roles")
 }
 
 model Permission {
   id          String   @id @default(uuid())
   name        String   @unique // users:read application:create
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   rolePermissions RolePermission[]
+
+  @@map("permission")
 }
 
 model RolePermission {
-  roleId       String
-  permissionId String
+  roleId       String     @map("role_id")
+  permissionId String     @map("permission_id")
   role         Role       @relation(fields: [roleId], references: [id])
   permission   Permission @relation(fields: [permissionId], references: [id])
 
   @@id([roleId, permissionId])
+  @@map("roles_permissions")
 }
 
 model UserRole {
-  userId String
-  roleId String
+  userId String @map("user_id")
+  roleId String @map("role_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@id([userId, roleId])
+  @@map("users_roles")
 }
 
-model RefreshToke {
+model RefreshToken {
   id        String   @id @default(uuid())
-  userId    String
+  userId    String   @map("user_id")
   token     String   @unique
   revoked   Boolean  @default(false)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id])
+
+  @@map("refresh_token")
 }
 
 enum AuthMethod {
