@@ -46,7 +46,7 @@ export class UserService {
         picture,
         method,
         isVerified,
-        password: passwordHash
+        passwordHash
       },
       include: {
         accounts: true

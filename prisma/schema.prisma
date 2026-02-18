@@ -8,65 +8,101 @@ datasource db {
 }
 
 model User {
-  id          String  @id @default(uuid())
-  email       String  @unique
-  password    String
-  displayName String
-  picture     String?
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String?
+  displayName  String
+  picture      String
+  isVerified   Boolean    @default(false)
+  method       AuthMethod
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
-  method   AuthMethod
-  role     UserRole   @default(REGULAR)
-  accounts Account[]
-
-  isVerified         Boolean @default(false) @map("is_verified")
-  isTwoFactorEnabled Boolean @default(false) @map("is_two_factor_enabled")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("users")
+  accounts     Account[]
+  sessions     Session[]
+  userRoles    UserRole[]
+  refreshTokes RefreshToke[]
 }
 
 model Account {
-  id           String  @id @default(uuid())
-  type         String
-  provider     String
-  refreshToken String? @map("refresh_token")
-  accessToken  String? @map("access_token")
-  expiresAt    Int     @map("expires_at")
+  id           String    @id @default(uuid())
+  userId       String
+  prodiver     String // 'google', 'github'
+  providerId   String // id от провайдера
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime? @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user   User?   @relation(fields: [userId], references: [id])
-  userId String?
-
-  @@map("accounts")
+  @@unique([prodiver, providerId])
 }
 
-model Token {
-  id        String    @id @default(uuid())
-  email     String
-  token     String    @unique
-  type      TokenType
-  expiresIn DateTime  @map("expires_in")
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  sessionToken String   @unique
+  expiresAt    DateTime
+  data         Json?
+  createdAt    DateTime @default(now())
 
-  @@map("tokens")
+  user User @relation(fields: [userId], references: [id])
 }
 
-enum UserRole {
-  REGULAR
-  ADMIN
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users           UserRole[]
+  rolePermissions RolePermission[]
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique // users:read application:create
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model RefreshToke {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 enum AuthMethod {
   CREDENTIALS
   GOOGLE
-  YANDEX
-}
-
-enum TokenType {
-  VERIFICATION
-  TWO_FACTOR
-  PASSWORD_RESET
+  GITHUB
 }

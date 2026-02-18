@@ -64,11 +64,11 @@ export class AuthService {
   async login(req: Request, dto: LoginDTO): Promise<User> {
     const user = await this.userService.findByEmail(dto.email)
 
-    if (!user || !user.password) {
+    if (!user || !user.passwordHash) {
       throw new NotFoundException('User not found')
     }
 
-    const isValidPassword = await this.validatePassword(dto.password, user.password)
+    const isValidPassword = await this.validatePassword(dto.password, user.passwordHash)
 
     if (!isValidPassword) {
       throw new UnauthorizedException('Incorrect login or password')
