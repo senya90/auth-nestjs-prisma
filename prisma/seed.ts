@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 
-import { PrismaClient } from '../src/__generated__/client.js'
+import { Permission, PrismaClient } from '../src/__generated__/client.js'
 
 const adapter = new PrismaPg({
   connectionString: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`
@@ -10,67 +10,96 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   const permissions = await Promise.all([
     prisma.permission.upsert({
-      where: { name: 'user:read' },
+      where: { id: 'f280bb72-6fe6-45b2-aa6f-481cca79f942' },
       update: {},
-      create: { name: 'user:read', description: 'Read user data' }
+      create: {
+        id: 'f280bb72-6fe6-45b2-aa6f-481cca79f942',
+        name: 'user:read',
+        description: 'Read user data'
+      }
     }),
     prisma.permission.upsert({
-      where: { name: 'user:edit' },
+      where: { id: 'f5f835d0-41c3-42f3-8541-d57818c7992d' },
       update: {},
-      create: { name: 'user:edit', description: 'Edit user data' }
+      create: {
+        id: 'f5f835d0-41c3-42f3-8541-d57818c7992d',
+        name: 'user:edit',
+        description: 'Edit user data'
+      }
     }),
     prisma.permission.upsert({
-      where: { name: 'permission:add' },
+      where: { id: 'f422efaa-6658-4160-b971-65c25c77073a' },
       update: {},
-      create: { name: 'permission:add', description: 'Add new permission' }
+      create: {
+        id: 'f422efaa-6658-4160-b971-65c25c77073a',
+        name: 'permission:add',
+        description: 'Add new permission'
+      }
     }),
     prisma.permission.upsert({
-      where: { name: 'permission:assign' },
+      where: { id: '8a7e0c8c-99c0-44ba-ad86-ac0cee5f536d' },
       update: {},
-      create: { name: 'permission:assign', description: 'Assign permission to a role' }
+      create: {
+        id: '8a7e0c8c-99c0-44ba-ad86-ac0cee5f536d',
+        name: 'permission:assign',
+        description: 'Assign permission to a role'
+      }
     }),
     prisma.permission.upsert({
-      where: { name: 'role:assign' },
+      where: { id: '1e8b1199-d0cd-409a-8d49-3a2d64bda0ee' },
       update: {},
-      create: { name: 'role:assign', description: 'Assign a role to a user' }
+      create: {
+        id: '1e8b1199-d0cd-409a-8d49-3a2d64bda0ee',
+        name: 'role:assign',
+        description: 'Assign a role to a user'
+      }
     })
   ])
 
   const admin = await prisma.role.upsert({
-    where: { name: 'Admin' },
+    where: { id: '14b1064c-d524-4b64-af54-578cf761ac3e' },
     update: {},
-    create: { name: 'Admin', description: 'Administrator' }
+    create: {
+      id: '14b1064c-d524-4b64-af54-578cf761ac3e',
+      name: 'Admin',
+      description: 'Administrator'
+    }
   })
 
   const support = await prisma.role.upsert({
-    where: { name: 'Support' },
+    where: { id: 'a067cb7e-8b73-49cb-96de-196b2f301503' },
     update: {},
     create: {
+      id: 'a067cb7e-8b73-49cb-96de-196b2f301503',
       name: 'Support',
       description: 'Can read some restricted information to investigate issues'
     }
   })
 
   const guest = await prisma.role.upsert({
-    where: { name: 'Guest' },
+    where: { id: 'b7faab28-5d8c-4526-9ec9-8d5a397ea34a' },
     update: {},
-    create: { name: 'Guest', description: 'Read open data' }
+    create: {
+      id: 'b7faab28-5d8c-4526-9ec9-8d5a397ea34a',
+      name: 'Guest',
+      description: 'Read open data'
+    }
   })
 
-  const rolePermissions: Record<string, string[]> = {
-    [admin.name]: ['user:read', 'user:edit', 'permission:add', 'permission:assign', 'role:assign'],
-    [support.name]: ['user:read', 'user:edit'],
-    [guest.name]: []
+  const [userRead, userEdit, permissionAdd, permissionAssign, roleAssign] = permissions
+
+  const rolePermissions: Record<string, Permission[]> = {
+    [admin.id]: [userRead, userEdit, permissionAdd, permissionAssign, roleAssign],
+    [support.id]: [userRead, userEdit],
+    [guest.id]: []
   }
 
-  for (const [roleName, permissionNames] of Object.entries(rolePermissions)) {
-    const role = await prisma.role.findUnique({ where: { name: roleName } })
-    if (!role) throw new Error(`Role ${roleName} not found`)
+  for (const [roleId, permission] of Object.entries(rolePermissions)) {
+    const role = await prisma.role.findUnique({ where: { id: roleId } })
+    if (!role) throw new Error(`Role id: ${roleId} not found`)
 
     await prisma.rolePermission.createMany({
-      data: permissionNames.map((name) => {
-        const permission = permissions.find((p) => p.name === name)
-        if (!permission) throw new Error(`Permission ${name} not found`)
+      data: permission.map((permission) => {
         return { roleId: role.id, permissionId: permission.id }
       }),
       skipDuplicates: true
