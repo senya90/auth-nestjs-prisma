@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator'
 
-import { TEXT } from '../../../libs/common/constants/text.js'
+import { TEXT } from '../../../common/constants/text.js'
 import { ROLES } from '../constants/roles.constants.js'
 
 export class CreatePermissionDTO {

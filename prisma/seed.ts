@@ -2,6 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import bcrypt from 'bcrypt'
 
 import { Permission, PrismaClient } from '../src/__generated__/client.js'
+import { ROLES } from '../src/auth/roles/constants/roles.constants.js'
 
 const adapter = new PrismaPg({
   connectionString: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`
@@ -59,30 +60,30 @@ async function main() {
   ])
 
   const admin = await prisma.role.upsert({
-    where: { id: '14b1064c-d524-4b64-af54-578cf761ac3e' },
+    where: { id: ROLES.IDS.ADMIN },
     update: {},
     create: {
-      id: '14b1064c-d524-4b64-af54-578cf761ac3e',
+      id: ROLES.IDS.ADMIN,
       name: 'Admin',
       description: 'Administrator'
     }
   })
 
   const support = await prisma.role.upsert({
-    where: { id: 'a067cb7e-8b73-49cb-96de-196b2f301503' },
+    where: { id: ROLES.IDS.SUPPORT },
     update: {},
     create: {
-      id: 'a067cb7e-8b73-49cb-96de-196b2f301503',
+      id: ROLES.IDS.SUPPORT,
       name: 'Support',
       description: 'Can read some restricted information to investigate issues'
     }
   })
 
   const guest = await prisma.role.upsert({
-    where: { id: 'b7faab28-5d8c-4526-9ec9-8d5a397ea34a' },
+    where: { id: ROLES.IDS.GUEST },
     update: {},
     create: {
-      id: 'b7faab28-5d8c-4526-9ec9-8d5a397ea34a',
+      id: ROLES.IDS.GUEST,
       name: 'Guest',
       description: 'Read open data'
     }

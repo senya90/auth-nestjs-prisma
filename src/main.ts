@@ -9,7 +9,7 @@ import ms, { StringValue } from 'ms'
 import { WinstonModule } from 'nest-winston'
 
 import { AppModule } from './app.module.js'
-import { parseBoolean } from './libs/common/utils/boolean/boolean.util.js'
+import { parseBoolean } from './common/utils/boolean/boolean.util.js'
 import { winstonConfig } from './logger/logger.config.js'
 
 async function bootstrap() {

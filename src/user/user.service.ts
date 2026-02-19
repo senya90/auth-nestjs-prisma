@@ -1,7 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common'
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 
 import type { User } from '../__generated__/client.js'
 import { AuthMethod } from '../__generated__/enums.js'
+import { ROLES } from '../auth/roles/constants/roles.constants.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 
 @Injectable()
@@ -14,10 +15,19 @@ export class UserService {
       include: {
         accounts: true,
         userRoles: {
-          include: {
+          select: {
             role: {
-              include: {
-                rolePermissions: true
+              select: {
+                name: true,
+                rolePermissions: {
+                  select: {
+                    permission: {
+                      select: {
+                        name: true
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -32,10 +42,19 @@ export class UserService {
       include: {
         accounts: true,
         userRoles: {
-          include: {
+          select: {
             role: {
-              include: {
-                rolePermissions: true
+              select: {
+                name: true,
+                rolePermissions: {
+                  select: {
+                    permission: {
+                      select: {
+                        name: true
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -52,37 +71,39 @@ export class UserService {
     method: AuthMethod
     isVerified: boolean
   }): Promise<User> {
-    const { email, passwordHash, displayName, isVerified, method, picture } = params
-    const existingUser = await this.findByEmail(email)
+    const existingUser = await this.findByEmail(params.email)
     if (existingUser) {
       throw new ConflictException('Email already exists')
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          email,
-          displayName,
-          picture,
-          method,
-          isVerified
-        }
-      })
-
-      await tx.password.create({
-        data: {
-          userId: user.id,
-          passwordHash
-        }
-      })
-
-      return user
+    const guestRole = await this.prisma.role.findUnique({
+      where: { id: ROLES.IDS.GUEST }
     })
-  }
 
-  async findPasswordByUserId(userId: string) {
-    return this.prisma.password.findUnique({
-      where: { userId }
+    if (!guestRole) {
+      throw new NotFoundException('Default role Guest not found')
+    }
+
+    const { passwordHash, ...userData } = params
+
+    return await this.prisma.user.create({
+      data: {
+        email: userData.email,
+        displayName: userData.displayName,
+        picture: userData.picture ?? '',
+        method: userData.method,
+        isVerified: userData.isVerified ?? false,
+        ...(passwordHash && {
+          password: {
+            create: { passwordHash }
+          }
+        }),
+        userRoles: {
+          create: {
+            roleId: guestRole.id
+          }
+        }
+      }
     })
   }
 }

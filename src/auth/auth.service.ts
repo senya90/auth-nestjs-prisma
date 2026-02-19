@@ -11,6 +11,7 @@ import bcrypt from 'bcrypt'
 import type { Request, Response } from 'express'
 
 import { User } from '../__generated__/client.js'
+import { PrismaService } from '../prisma/prisma.service.js'
 import { UserService } from '../user/user.service.js'
 import { LoginDTO } from './dto/login.dto.js'
 import { RegisterDTO } from './dto/register.dto.js'
@@ -21,7 +22,8 @@ export class AuthService {
 
   constructor(
     private readonly userService: UserService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService
   ) {}
 
   async register(req: Request, dto: RegisterDTO): Promise<User> {
@@ -51,7 +53,7 @@ export class AuthService {
       throw new NotFoundException('User not found')
     }
 
-    const userPassword = await this.userService.findPasswordByUserId(user.id)
+    const userPassword = await this.findPasswordByUserId(user.id)
 
     const isValidPassword = await this.validatePassword(dto.password, userPassword?.passwordHash)
 
@@ -87,5 +89,11 @@ export class AuthService {
     if (!hash) return false
 
     return bcrypt.compare(password, hash)
+  }
+
+  private async findPasswordByUserId(userId: string) {
+    return this.prisma.password.findUnique({
+      where: { userId }
+    })
   }
 }

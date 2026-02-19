@@ -4,7 +4,7 @@ import {
   ValidatorConstraintInterface
 } from 'class-validator'
 
-import { TEXT } from '../../libs/common/constants/text.js'
+import { TEXT } from '../../common/constants/text.js'
 import { RegisterDTO } from '../dto/register.dto.js'
 
 @ValidatorConstraint({ name: 'IsPasswordsMatching', async: false })

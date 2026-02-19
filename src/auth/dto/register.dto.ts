@@ -1,6 +1,6 @@
 import { IsEmail, IsNotEmpty, IsString, MinLength, Validate } from 'class-validator'
 
-import { TEXT } from '../../libs/common/constants/text.js'
+import { TEXT } from '../../common/constants/text.js'
 import { PASSWORD } from '../constants/password.constants.js'
 import { IsPasswordsMatchingConstraint } from '../decorators/is-passwords-matching-constraint.decorator.js'
 

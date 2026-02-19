@@ -1,6 +1,6 @@
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
 
-import { TEXT } from '../../libs/common/constants/text.js'
+import { TEXT } from '../../common/constants/text.js'
 import { PASSWORD } from '../constants/password.constants.js'
 
 export class LoginDTO {

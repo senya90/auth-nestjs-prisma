@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common'
+import { Controller, Get, HttpCode, HttpStatus, Query } from '@nestjs/common'
 
 import { UserService } from './user.service.js'
 
@@ -8,9 +8,18 @@ export class UserController {
 
   @Get('profile')
   @HttpCode(HttpStatus.OK)
-  findProfile() {}
+  // @UseGuards(JwtAuthGuard)
+  findProfile() {
+    // return this.userService.findById(currentUser.id)
+  }
 
   @Get('profile/:id')
   @HttpCode(HttpStatus.OK)
   findProfileById() {}
+
+  @Get('search')
+  @HttpCode(HttpStatus.OK)
+  findProfileByEmail(@Query('email') email: string) {
+    return this.userService.findByEmail(email)
+  }
 }
