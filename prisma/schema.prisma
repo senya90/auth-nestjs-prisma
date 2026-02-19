@@ -28,7 +28,7 @@ model User {
 model Account {
   id           String    @id @default(uuid())
   userId       String    @map("user_id")
-  prodiver     String // 'google', 'github'
+  provider     String    @map("provider") // 'google', 'github' 
   providerId   String    @map("provider_id") // id от провайдера 
   accessToken  String?   @map("access_token")
   refreshToken String?   @map("refresh_token")
@@ -38,7 +38,7 @@ model Account {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([prodiver, providerId])
+  @@unique([provider, providerId])
   @@map("accounts")
 }
 
