@@ -8,20 +8,19 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  passwordHash String?    @map("password_hash")
-  displayName  String     @map("display_name")
-  picture      String
-  isVerified   Boolean    @default(false) @map("is_verified")
-  method       AuthMethod
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  id          String     @id @default(uuid())
+  email       String     @unique
+  displayName String     @map("display_name")
+  picture     String
+  isVerified  Boolean    @default(false) @map("is_verified")
+  method      AuthMethod
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
 
   accounts     Account[]
-  sessions     Session[]
   userRoles    UserRole[]
   refreshTokes RefreshToken[]
+  password     Password?
 
   @@map("users")
 }
@@ -41,19 +40,6 @@ model Account {
 
   @@unique([prodiver, providerId])
   @@map("accounts")
-}
-
-model Session {
-  id           String   @id @default(uuid())
-  userId       String   @map("user_id")
-  sessionToken String   @unique @map("session_token")
-  data         Json?
-  expiresAt    DateTime @map("expires_at")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@map("session")
 }
 
 model Role {
@@ -111,7 +97,19 @@ model RefreshToken {
 
   user User @relation(fields: [userId], references: [id])
 
-  @@map("refresh_token")
+  @@map("refresh_tokens")
+}
+
+model Password {
+  id           String   @id @default(uuid())
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  userId       String   @unique @map("user_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("passwords")
 }
 
 enum AuthMethod {

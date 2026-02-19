@@ -41,45 +41,30 @@ export class AuthService {
       picture: ''
     })
 
-    await this.saveSession(req, newUser)
-
     return newUser
-  }
-
-  async saveSession(req: Request, user: User): Promise<User> {
-    return new Promise((resolve, reject) => {
-      req.session.userId = user.id
-
-      req.session.save(err => {
-        if (err) {
-          return reject(new InternalServerErrorException('Failed to save session. Check settings.'))
-        }
-
-        this.logger.debug(`Session saved. User: ${user.id}, ${user.email}`)
-        resolve(user)
-      })
-    })
   }
 
   async login(req: Request, dto: LoginDTO): Promise<User> {
     const user = await this.userService.findByEmail(dto.email)
 
-    if (!user || !user.passwordHash) {
+    if (!user) {
       throw new NotFoundException('User not found')
     }
 
-    const isValidPassword = await this.validatePassword(dto.password, user.passwordHash)
+    const userPassword = await this.userService.findPasswordByUserId(user.id)
+
+    const isValidPassword = await this.validatePassword(dto.password, userPassword?.passwordHash)
 
     if (!isValidPassword) {
       throw new UnauthorizedException('Incorrect login or password')
     }
 
-    return this.saveSession(req, user)
+    return user
   }
 
   async logout(req: Request, res: Response): Promise<void> {
     return new Promise((resolve, reject) => {
-      req.session.destroy(err => {
+      req.session.destroy((err) => {
         if (err) {
           return reject(new InternalServerErrorException('Failed to terminate session when logout'))
         }
@@ -95,7 +80,12 @@ export class AuthService {
     return bcrypt.hash(password, saltRounds)
   }
 
-  private validatePassword(password: string, hash: string): Promise<boolean> {
+  private async validatePassword(
+    password: string,
+    hash: string | undefined | null
+  ): Promise<boolean> {
+    if (!hash) return false
+
     return bcrypt.compare(password, hash)
   }
 }

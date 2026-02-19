@@ -10,6 +10,7 @@ export const TEXT = {
     PASSWORD: {
       NOT_MATCH: 'Passwords do not match'
     },
-    min: (count: number) => `Minimum character count: ${count}`
+    min: (count: number) => `Minimum character count: ${count}`,
+    max: (count: number) => `Maximum character count: ${count}`
   }
 }
