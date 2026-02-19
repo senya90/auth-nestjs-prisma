@@ -1,10 +1,12 @@
 import { PrismaPg } from '@prisma/adapter-pg'
+import bcrypt from 'bcrypt'
 
 import { Permission, PrismaClient } from '../src/__generated__/client.js'
 
 const adapter = new PrismaPg({
   connectionString: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`
 })
+
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
@@ -105,6 +107,41 @@ async function main() {
       skipDuplicates: true
     })
   }
+
+  const saltRounds = Number(process.env.SALT_ROUNDS) || 10
+  const defaultAdminPassword = process.env.DEFAULT_ADMIN_PASSWORD || '00000000'
+  const passwordHash = await bcrypt.hash(defaultAdminPassword, saltRounds)
+
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@admin.com' },
+    update: {},
+    create: {
+      email: 'admin@admin.com',
+      displayName: 'User Admin',
+      picture: '',
+      method: 'CREDENTIALS',
+      isVerified: true,
+      password: {
+        create: {
+          passwordHash
+        }
+      }
+    }
+  })
+
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
+        userId: adminUser.id,
+        roleId: admin.id
+      }
+    },
+    update: {},
+    create: {
+      userId: adminUser.id,
+      roleId: admin.id
+    }
+  })
 
   console.log('--- Seed completed ---')
 }
