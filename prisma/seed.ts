@@ -2,7 +2,8 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import bcrypt from 'bcrypt'
 
 import { Permission, PrismaClient } from '../src/__generated__/client.js'
-import { ROLES } from '../src/auth/roles/constants/roles.constants.js'
+import { PERMISSION, PERMISSIONS } from '../src/auth/roles/constants/permissions.constants.js'
+import { ROLE, ROLES } from '../src/auth/roles/constants/roles.constants.js'
 
 const adapter = new PrismaPg({
   connectionString: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`
@@ -13,47 +14,47 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   const permissions = await Promise.all([
     prisma.permission.upsert({
-      where: { id: 'f280bb72-6fe6-45b2-aa6f-481cca79f942' },
+      where: { id: PERMISSIONS.IDS.USER__READ },
       update: {},
       create: {
-        id: 'f280bb72-6fe6-45b2-aa6f-481cca79f942',
-        name: 'user:read',
+        id: PERMISSIONS.IDS.USER__READ,
+        name: PERMISSION.USER__READ,
         description: 'Read user data'
       }
     }),
     prisma.permission.upsert({
-      where: { id: 'f5f835d0-41c3-42f3-8541-d57818c7992d' },
+      where: { id: PERMISSIONS.IDS.USER__EDIT },
       update: {},
       create: {
-        id: 'f5f835d0-41c3-42f3-8541-d57818c7992d',
-        name: 'user:edit',
+        id: PERMISSIONS.IDS.USER__EDIT,
+        name: PERMISSION.USER__EDIT,
         description: 'Edit user data'
       }
     }),
     prisma.permission.upsert({
-      where: { id: 'f422efaa-6658-4160-b971-65c25c77073a' },
+      where: { id: PERMISSIONS.IDS.PERMISSION__ADD },
       update: {},
       create: {
-        id: 'f422efaa-6658-4160-b971-65c25c77073a',
-        name: 'permission:add',
+        id: PERMISSIONS.IDS.PERMISSION__ADD,
+        name: PERMISSION.PERMISSION__ADD,
         description: 'Add new permission'
       }
     }),
     prisma.permission.upsert({
-      where: { id: '8a7e0c8c-99c0-44ba-ad86-ac0cee5f536d' },
+      where: { id: PERMISSIONS.IDS.PERMISSION__ASSIGN },
       update: {},
       create: {
-        id: '8a7e0c8c-99c0-44ba-ad86-ac0cee5f536d',
-        name: 'permission:assign',
+        id: PERMISSIONS.IDS.PERMISSION__ASSIGN,
+        name: PERMISSION.PERMISSION__ASSIGN,
         description: 'Assign permission to a role'
       }
     }),
     prisma.permission.upsert({
-      where: { id: '1e8b1199-d0cd-409a-8d49-3a2d64bda0ee' },
+      where: { id: PERMISSIONS.IDS.ROLE__ASSIGN },
       update: {},
       create: {
-        id: '1e8b1199-d0cd-409a-8d49-3a2d64bda0ee',
-        name: 'role:assign',
+        id: PERMISSIONS.IDS.ROLE__ASSIGN,
+        name: PERMISSION.ROLE__ASSIGN,
         description: 'Assign a role to a user'
       }
     })
@@ -64,7 +65,7 @@ async function main() {
     update: {},
     create: {
       id: ROLES.IDS.ADMIN,
-      name: 'Admin',
+      name: ROLE.ADMIN,
       description: 'Administrator'
     }
   })
@@ -74,7 +75,7 @@ async function main() {
     update: {},
     create: {
       id: ROLES.IDS.SUPPORT,
-      name: 'Support',
+      name: ROLE.SUPPORT,
       description: 'Can read some restricted information to investigate issues'
     }
   })
@@ -84,7 +85,7 @@ async function main() {
     update: {},
     create: {
       id: ROLES.IDS.GUEST,
-      name: 'Guest',
+      name: ROLE.GUEST,
       description: 'Read open data'
     }
   })

@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config'
 import bcrypt from 'bcrypt'
 import type { Request, Response } from 'express'
 
-import { User } from '../__generated__/client.js'
+import { AuthMethod, Password, User } from '../__generated__/client.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { UserService } from '../user/user.service.js'
 import { LoginDTO } from './dto/login.dto.js'
@@ -77,6 +77,22 @@ export class AuthService {
     })
   }
 
+  async validateUser(email: string, password: string): Promise<User | null> {
+    const user = await this.userService.findByEmail(email)
+
+    if (!user) return null
+
+    if (user.method !== AuthMethod.CREDENTIALS) return null
+
+    const userPassword = await this.getUserPassword(user.id)
+    if (!userPassword?.passwordHash) return null
+
+    const isMatch = await this.validatePassword(password, userPassword.passwordHash)
+
+    if (!isMatch) return null
+    return user
+  }
+
   private hashPassword(password: string): Promise<string> {
     const saltRounds = Number(this.configService.getOrThrow<number>('SALT_ROUNDS'))
     return bcrypt.hash(password, saltRounds)
@@ -92,6 +108,12 @@ export class AuthService {
   }
 
   private async findPasswordByUserId(userId: string) {
+    return this.prisma.password.findUnique({
+      where: { userId }
+    })
+  }
+
+  private async getUserPassword(userId: string): Promise<Password | null> {
     return this.prisma.password.findUnique({
       where: { userId }
     })

@@ -27,7 +27,8 @@ export const ROLES = {
       }
     }
   },
-  IDS: ROLES_IDS
+  IDS: ROLES_IDS,
+  DECORATOR_KEY: 'roles'
 }
 
 export enum ROLE {
