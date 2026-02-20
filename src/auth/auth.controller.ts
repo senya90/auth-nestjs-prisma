@@ -1,9 +1,13 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common'
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common'
 import type { Request, Response } from 'express'
 
+import type { User } from '../__generated__/client.js'
+import { ValidationGuard } from '../common/guards/validation.guard.js'
 import { AuthService } from './auth.service.js'
+import { CurrentUser } from './decorators/current-user.decorator.js'
 import { LoginDTO } from './dto/login.dto.js'
 import { RegisterDTO } from './dto/register.dto.js'
+import { LocalAuthGuard } from './guards/local-auth.guard.js'
 
 @Controller('auth')
 export class AuthController {
@@ -15,10 +19,10 @@ export class AuthController {
     return this.authService.register(dto)
   }
 
+  @UseGuards(new ValidationGuard(LoginDTO), LocalAuthGuard)
   @Post('login')
-  @HttpCode(HttpStatus.OK)
-  async login(@Req() request: Request, @Body() dto: LoginDTO) {
-    return this.authService.login(request, dto)
+  async login(@CurrentUser() user: User) {
+    return this.authService.login(user)
   }
 
   @Post('logout')

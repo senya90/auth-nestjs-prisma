@@ -46,20 +46,10 @@ export class AuthService {
     return newUser
   }
 
-  async login(req: Request, dto: LoginDTO): Promise<User> {
-    const user = await this.userService.findByEmail(dto.email)
-
-    if (!user) {
-      throw new NotFoundException('User not found')
-    }
-
+  async login(user: User): Promise<User> {
     const userPassword = await this.findPasswordByUserId(user.id)
 
-    const isValidPassword = await this.validatePassword(dto.password, userPassword?.passwordHash)
-
-    if (!isValidPassword) {
-      throw new UnauthorizedException('Incorrect login or password')
-    }
+    // todo: создать токены
 
     return user
   }

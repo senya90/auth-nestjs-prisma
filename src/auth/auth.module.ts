@@ -5,10 +5,11 @@ import { AuthController } from './auth.controller.js'
 import { AuthService } from './auth.service.js'
 import { RolesController } from './roles/roles.controller.js'
 import { RolesService } from './roles/roles.service.js'
+import { LocalStrategy } from './strategies/local.strategy.js'
 
 @Module({
   imports: [UserModule],
   controllers: [AuthController, RolesController],
-  providers: [AuthService, RolesService]
+  providers: [AuthService, RolesService, LocalStrategy]
 })
 export class AuthModule {}
