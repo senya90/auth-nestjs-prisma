@@ -22,4 +22,11 @@ export class UserController {
   findProfileByEmail(@Query('email') email: string) {
     return this.userService.findByEmail(email)
   }
+
+  @Get('roles')
+  @HttpCode(HttpStatus.OK)
+  // @UseGuards(JwtAuthGuard)
+  getUserRoles(@Query('user_id') userId: string) {
+    return this.userService.getUserRoles(userId)
+  }
 }

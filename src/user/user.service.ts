@@ -1,9 +1,14 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException
+} from '@nestjs/common'
 
 import type { User } from '../__generated__/client.js'
-import { AuthMethod } from '../__generated__/enums.js'
 import { ROLES } from '../auth/roles/constants/roles.constants.js'
 import { PrismaService } from '../prisma/prisma.service.js'
+import { CreateUser } from './types/create-user.js'
 
 @Injectable()
 export class UserService {
@@ -63,14 +68,7 @@ export class UserService {
     })
   }
 
-  async create(params: {
-    email: string
-    passwordHash: string
-    displayName: string
-    picture: string
-    method: AuthMethod
-    isVerified: boolean
-  }): Promise<User> {
+  async create(params: CreateUser): Promise<User> {
     const existingUser = await this.findByEmail(params.email)
     if (existingUser) {
       throw new ConflictException('Email already exists')
@@ -89,9 +87,9 @@ export class UserService {
     return await this.prisma.user.create({
       data: {
         email: userData.email,
-        displayName: userData.displayName,
-        picture: userData.picture ?? '',
         method: userData.method,
+        displayName: userData.displayName ?? userData.email,
+        picture: userData.picture ?? '',
         isVerified: userData.isVerified ?? false,
         ...(passwordHash && {
           password: {
@@ -103,6 +101,57 @@ export class UserService {
             roleId: guestRole.id
           }
         }
+      }
+    })
+  }
+
+  async getUserRoles(userId: string) {
+    const permissionData = await this.prisma.userRole.findMany({
+      where: { userId },
+      include: {
+        role: {
+          include: {
+            rolePermissions: {
+              select: {
+                permission: true
+              }
+            }
+          }
+        }
+      }
+    })
+
+    return permissionData.map((role) => {
+      return {
+        id: role.roleId,
+        name: role.role.name,
+        description: role.role.description,
+        permissions: role.role.rolePermissions.map((permission) => ({
+          id: permission.permission.id,
+          name: permission.permission.name
+        }))
+      }
+    })
+  }
+
+  async assignRole(userId: string, role: { roleName?: string; roleId?: string }): Promise<void> {
+    const hasField = role?.roleId || role?.roleName
+    if (!hasField) {
+      throw new BadRequestException('No data to assign a role to the user')
+    }
+
+    const { roleId, roleName } = role
+
+    const targetRole = roleId
+      ? await this.prisma.role.findUnique({ where: { id: roleId } })
+      : await this.prisma.role.findUnique({ where: { name: roleName } })
+
+    if (!targetRole) throw new NotFoundException('Role not found')
+
+    await this.prisma.userRole.create({
+      data: {
+        userId,
+        roleId: targetRole.id
       }
     })
   }

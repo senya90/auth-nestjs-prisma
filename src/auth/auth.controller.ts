@@ -11,8 +11,8 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  async register(@Req() request: Request, @Body() dto: RegisterDTO) {
-    return this.authService.register(request, dto)
+  async register(@Body() dto: RegisterDTO) {
+    return this.authService.register(dto)
   }
 
   @Post('login')

@@ -26,7 +26,7 @@ export class AuthService {
     private readonly prisma: PrismaService
   ) {}
 
-  async register(req: Request, dto: RegisterDTO): Promise<User> {
+  async register(dto: RegisterDTO): Promise<User> {
     const user = await this.userService.findByEmail(dto.email)
 
     if (user) {
