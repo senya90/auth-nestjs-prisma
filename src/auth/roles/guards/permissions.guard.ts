@@ -14,7 +14,12 @@ export class PermissionsGuard implements CanActivate {
 
     if (!requiredPermissions) return true
 
-    // todo:
-    return true
+    // todo: описать тип
+    // const { user } = context.switchToHttp().getRequest()
+
+    // вычислить по user.permissions
+    // return requiredRoles.some((role) => user?.roles?.includes(role))
+
+    return false
   }
 }

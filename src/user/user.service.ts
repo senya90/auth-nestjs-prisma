@@ -134,7 +134,10 @@ export class UserService {
     })
   }
 
-  async assignRole(userId: string, role: { roleName?: string; roleId?: string }): Promise<void> {
+  async assignRole(
+    userId: string,
+    role: { roleName?: string; roleId?: string }
+  ): Promise<void> {
     const hasField = role?.roleId || role?.roleName
     if (!hasField) {
       throw new BadRequestException('No data to assign a role to the user')

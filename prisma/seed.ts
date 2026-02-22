@@ -2,7 +2,10 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import bcrypt from 'bcrypt'
 
 import { Permission, PrismaClient } from '../src/__generated__/client.js'
-import { PERMISSION, PERMISSIONS } from '../src/auth/roles/constants/permissions.constants.js'
+import {
+  PERMISSION,
+  PERMISSIONS
+} from '../src/auth/roles/constants/permissions.constants.js'
 import { ROLE, ROLES } from '../src/auth/roles/constants/roles.constants.js'
 
 const adapter = new PrismaPg({
@@ -90,10 +93,17 @@ async function main() {
     }
   })
 
-  const [userRead, userEdit, permissionAdd, permissionAssign, roleAssign] = permissions
+  const [userRead, userEdit, permissionAdd, permissionAssign, roleAssign] =
+    permissions
 
   const rolePermissions: Record<string, Permission[]> = {
-    [admin.id]: [userRead, userEdit, permissionAdd, permissionAssign, roleAssign],
+    [admin.id]: [
+      userRead,
+      userEdit,
+      permissionAdd,
+      permissionAssign,
+      roleAssign
+    ],
     [support.id]: [userRead, userEdit],
     [guest.id]: []
   }

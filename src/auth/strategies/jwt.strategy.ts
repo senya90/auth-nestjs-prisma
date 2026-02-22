@@ -5,17 +5,19 @@ import { Request } from 'express'
 import { ExtractJwt, Strategy } from 'passport-jwt'
 
 import { UserService } from '../../user/user.service.js'
+import { AuthenticatedRequest } from '../types/authenticated-request.type.js'
+import { TokenPayload, TokenPayloadFull } from '../types/token-payload.type.js'
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly configService: ConfigService,
     private readonly userService: UserService
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (request: Request) => {
-          return request?.cookies?.access_token
+        (request: AuthenticatedRequest) => {
+          return request?.cookies?.access_token ?? null
         }
       ]),
       ignoreExpiration: false,
@@ -23,19 +25,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     })
   }
 
-  // todo: типизировать, уточнить возвращаемый тип
-  async validate(payload: any) {
+  async validate(payload: TokenPayloadFull) {
     const user = await this.userService.findById(payload.sub)
+
     if (!user) {
       throw new UnauthorizedException()
     }
 
-    // todo: уточнить тип
-    return {
-      id: payload.sub,
-      email: payload.email,
-      roles: payload.roles,
-      permissions: payload.permissions
+    const tokenPayload: TokenPayload = {
+      sub: payload.sub,
+      roles: payload.roles.map((role) => ({
+        id: role.id,
+        name: role.name
+      }))
     }
+
+    return tokenPayload
   }
 }
