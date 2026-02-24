@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common'
 
+import { PermissionName, RoleName } from '../../__generated__/enums.js'
 import { PrismaService } from '../../prisma/prisma.service.js'
 
 @Injectable()
 export class RolesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  createPermission(name: string, description?: string) {
+  createPermission(name: PermissionName, description?: string) {
     return this.prisma.permission.create({
       data: {
         name,
@@ -15,7 +16,7 @@ export class RolesService {
     })
   }
 
-  createRole(name: string, description?: string) {
+  createRole(name: RoleName, description?: string) {
     return this.prisma.role.create({
       data: {
         name,

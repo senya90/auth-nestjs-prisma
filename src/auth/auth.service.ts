@@ -16,8 +16,6 @@ import { msToSeconds } from '../common/utils/time/ms-to-seconds.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { UserService } from '../user/user.service.js'
 import { RegisterDTO } from './dto/register.dto.js'
-import { PERMISSION } from './roles/constants/permissions.constants.js'
-import { ROLE } from './roles/constants/roles.constants.js'
 import { TokenPayload } from './types/token-payload.type.js'
 
 @Injectable()
@@ -52,9 +50,9 @@ export class AuthService {
   }
 
   async login(
-    user: User
+    userId: string
   ): Promise<{ accessToken: string; refreshToken: string; csrfToken: string }> {
-    const roles = await this.userService.getUserRoles(user.id)
+    const roles = await this.userService.getUserRoles(userId)
     const accessTTLMs = Number(
       this.configService.getOrThrow<number>('JWT_ACCESS_TTL')
     )
@@ -63,14 +61,14 @@ export class AuthService {
     )
 
     const tokenPayload: TokenPayload = {
-      sub: user.id,
+      sub: userId,
       roles: roles.map((role) => ({
         id: role.id,
-        name: role.name as ROLE,
+        name: role.name,
         permissions: role.permissions.map((p) => {
           return {
             id: p.id,
-            name: p.name as PERMISSION
+            name: p.name
           }
         })
       }))
@@ -90,7 +88,7 @@ export class AuthService {
       data: {
         expiresAt: new Date(Date.now() + refreshTTLMs),
         token: refreshTokenHash,
-        userId: user.id
+        userId
       }
     })
 
@@ -148,7 +146,7 @@ export class AuthService {
       where: { token: hashed }
     })
 
-    return this.login(user)
+    return this.login(user.id)
   }
 
   private hashPassword(password: string): Promise<string> {

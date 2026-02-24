@@ -5,9 +5,8 @@ import {
   NotFoundException
 } from '@nestjs/common'
 
-import type { User } from '../__generated__/client.js'
-import { PERMISSION } from '../auth/roles/constants/permissions.constants.js'
-import { ROLE, ROLES } from '../auth/roles/constants/roles.constants.js'
+import type { PermissionName, RoleName, User } from '../__generated__/client.js'
+import { ROLES } from '../auth/roles/constants/roles.constants.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { CreateUser } from './types/create-user.js'
 
@@ -67,7 +66,11 @@ export class UserService {
   async getUserRoles(
     userId: string
   ): Promise<
-    { id: string; name: string; permissions: { id: string; name: string }[] }[]
+    {
+      id: string
+      name: RoleName
+      permissions: { id: string; name: PermissionName }[]
+    }[]
   > {
     const userRoles = await this.prisma.userRole.findMany({
       where: { userId },
@@ -93,17 +96,17 @@ export class UserService {
 
     return userRoles.map((ur) => ({
       id: ur.role.id,
-      name: ur.role.name as ROLE,
+      name: ur.role.name as RoleName,
       permissions: ur.role.rolePermissions.map((rp) => ({
         id: rp.permission.id,
-        name: rp.permission.name as PERMISSION
+        name: rp.permission.name as PermissionName
       }))
     }))
   }
 
   async assignRole(
     userId: string,
-    role: { roleName?: string; roleId?: string }
+    role: { roleName?: RoleName; roleId?: string }
   ): Promise<void> {
     const hasField = role?.roleId || role?.roleName
     if (!hasField) {

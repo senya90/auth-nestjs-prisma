@@ -3,9 +3,8 @@ import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
 
+import { PermissionName, RoleName } from '../../__generated__/enums.js'
 import { UserService } from '../../user/user.service.js'
-import { PERMISSION } from '../roles/constants/permissions.constants.js'
-import { ROLE } from '../roles/constants/roles.constants.js'
 import { AuthenticatedRequest } from '../types/authenticated-request.type.js'
 import { TokenPayload, TokenPayloadFull } from '../types/token-payload.type.js'
 
@@ -39,11 +38,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       sub: user.id,
       roles: roles.map((role) => ({
         id: role.id,
-        name: role.name as ROLE,
+        name: role.name as RoleName,
         permissions: role.permissions.map((p) => {
           return {
             id: p.id,
-            name: p.name as PERMISSION
+            name: p.name as PermissionName
           }
         })
       }))

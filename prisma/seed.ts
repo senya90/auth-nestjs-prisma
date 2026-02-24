@@ -1,12 +1,14 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 import bcrypt from 'bcrypt'
 
-import { Permission, PrismaClient } from '../src/__generated__/client.js'
 import {
-  PERMISSION,
-  PERMISSIONS
-} from '../src/auth/roles/constants/permissions.constants.js'
-import { ROLE, ROLES } from '../src/auth/roles/constants/roles.constants.js'
+  Permission,
+  PermissionName,
+  PrismaClient,
+  RoleName
+} from '../src/__generated__/client.js'
+import { PERMISSIONS } from '../src/auth/roles/constants/permissions.constants.js'
+import { ROLES } from '../src/auth/roles/constants/roles.constants.js'
 
 const adapter = new PrismaPg({
   connectionString: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`
@@ -21,7 +23,7 @@ async function main() {
       update: {},
       create: {
         id: PERMISSIONS.IDS.USER__READ,
-        name: PERMISSION.USER__READ,
+        name: PermissionName.USER__READ,
         description: 'Read user data'
       }
     }),
@@ -30,7 +32,7 @@ async function main() {
       update: {},
       create: {
         id: PERMISSIONS.IDS.USER__EDIT,
-        name: PERMISSION.USER__EDIT,
+        name: PermissionName.USER__EDIT,
         description: 'Edit user data'
       }
     }),
@@ -39,7 +41,7 @@ async function main() {
       update: {},
       create: {
         id: PERMISSIONS.IDS.PERMISSION__ADD,
-        name: PERMISSION.PERMISSION__ADD,
+        name: PermissionName.PERMISSION__ADD,
         description: 'Add new permission'
       }
     }),
@@ -48,7 +50,7 @@ async function main() {
       update: {},
       create: {
         id: PERMISSIONS.IDS.PERMISSION__ASSIGN,
-        name: PERMISSION.PERMISSION__ASSIGN,
+        name: PermissionName.PERMISSION__ASSIGN,
         description: 'Assign permission to a role'
       }
     }),
@@ -57,8 +59,26 @@ async function main() {
       update: {},
       create: {
         id: PERMISSIONS.IDS.ROLE__ASSIGN,
-        name: PERMISSION.ROLE__ASSIGN,
+        name: PermissionName.ROLE__ASSIGN,
         description: 'Assign a role to a user'
+      }
+    }),
+    prisma.permission.upsert({
+      where: { id: PERMISSIONS.IDS.TEST__MUTATION },
+      update: {},
+      create: {
+        id: PERMISSIONS.IDS.TEST__MUTATION,
+        name: PermissionName.TEST__MUTATION,
+        description: 'Mutation of something (for test only)'
+      }
+    }),
+    prisma.permission.upsert({
+      where: { id: PERMISSIONS.IDS.TEST__READ },
+      update: {},
+      create: {
+        id: PERMISSIONS.IDS.TEST__READ,
+        name: PermissionName.TEST__READ,
+        description: 'Read of something (for test only)'
       }
     })
   ])
@@ -68,8 +88,18 @@ async function main() {
     update: {},
     create: {
       id: ROLES.IDS.ADMIN,
-      name: ROLE.ADMIN,
+      name: RoleName.ADMIN,
       description: 'Administrator'
+    }
+  })
+
+  const moderator = await prisma.role.upsert({
+    where: { id: ROLES.IDS.MODERATOR },
+    update: {},
+    create: {
+      id: ROLES.IDS.MODERATOR,
+      name: RoleName.MODERATOR,
+      description: 'Moderator'
     }
   })
 
@@ -78,7 +108,7 @@ async function main() {
     update: {},
     create: {
       id: ROLES.IDS.SUPPORT,
-      name: ROLE.SUPPORT,
+      name: RoleName.SUPPORT,
       description: 'Can read some restricted information to investigate issues'
     }
   })
@@ -88,13 +118,20 @@ async function main() {
     update: {},
     create: {
       id: ROLES.IDS.GUEST,
-      name: ROLE.GUEST,
+      name: RoleName.GUEST,
       description: 'Read open data'
     }
   })
 
-  const [userRead, userEdit, permissionAdd, permissionAssign, roleAssign] =
-    permissions
+  const [
+    userRead,
+    userEdit,
+    permissionAdd,
+    permissionAssign,
+    roleAssign,
+    mutateTest,
+    readTest
+  ] = permissions
 
   const rolePermissions: Record<string, Permission[]> = {
     [admin.id]: [
@@ -102,8 +139,11 @@ async function main() {
       userEdit,
       permissionAdd,
       permissionAssign,
-      roleAssign
+      roleAssign,
+      mutateTest,
+      readTest
     ],
+    [moderator.id]: [userRead, userEdit, roleAssign, mutateTest, readTest],
     [support.id]: [userRead, userEdit],
     [guest.id]: []
   }

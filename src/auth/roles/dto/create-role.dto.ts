@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator'
 
+import { RoleName } from '../../../__generated__/enums.js'
 import { TEXT } from '../../../common/constants/text.js'
 import { ROLES } from '../constants/roles.constants.js'
 
@@ -12,7 +13,7 @@ export class CreateRoleDTO {
   @MaxLength(ROLES.VALIDATION.ROLE.NAME.MAX_LENGTH, {
     message: TEXT.VALIDATION.min(ROLES.VALIDATION.ROLE.NAME.MAX_LENGTH)
   })
-  name: string
+  name: RoleName
 
   @IsString({ message: TEXT.VALIDATION.BE.STRING })
   @MinLength(ROLES.VALIDATION.ROLE.DESCRIPTION.MIN_LENGTH, {

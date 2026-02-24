@@ -1,14 +1,13 @@
-import { PERMISSION } from '../roles/constants/permissions.constants.js'
-import { ROLE } from '../roles/constants/roles.constants.js'
+import { PermissionName, RoleName } from '../../__generated__/enums.js'
 
 export interface TokenPayload {
   sub: string
   roles: {
     id: string
-    name: ROLE
+    name: RoleName
     permissions: {
       id: string
-      name: PERMISSION
+      name: PermissionName
     }[]
   }[]
 }

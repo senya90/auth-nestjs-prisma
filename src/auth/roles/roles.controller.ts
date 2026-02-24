@@ -1,5 +1,4 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common'
-import type { Request, Response } from 'express'
 
 import { AssignPermissionDTO } from './dto/assign-permission.dto.js'
 import { CreatePermissionDTO } from './dto/create-permission.dto.js'

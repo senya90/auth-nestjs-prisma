@@ -1,5 +1,15 @@
-import { Controller, Get, HttpCode, HttpStatus, Query } from '@nestjs/common'
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Query,
+  UseGuards
+} from '@nestjs/common'
 
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js'
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js'
+import type { TokenPayload } from '../auth/types/token-payload.type.js'
 import { UserService } from './user.service.js'
 
 @Controller('users')
@@ -7,10 +17,10 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('profile')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  // @UseGuards(JwtAuthGuard)
-  findProfile() {
-    // return this.userService.findById(currentUser.id)
+  findProfile(@CurrentUser() user: TokenPayload) {
+    return this.userService.findById(user.sub)
   }
 
   @Get('profile/:id')
@@ -25,7 +35,7 @@ export class UserController {
 
   @Get('roles')
   @HttpCode(HttpStatus.OK)
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   getUserRoles(@Query('user_id') userId: string) {
     return this.userService.getUserRoles(userId)
   }

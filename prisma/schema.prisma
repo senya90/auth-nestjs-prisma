@@ -17,10 +17,10 @@ model User {
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
-  accounts     Account[]
-  userRoles    UserRole[]
-  refreshTokes RefreshToken[]
-  password     Password?
+  accounts      Account[]
+  userRoles     UserRole[]
+  refreshTokens RefreshToken[]
+  password      Password?
 
   @@map("users")
 }
@@ -44,7 +44,7 @@ model Account {
 
 model Role {
   id          String   @id @default(uuid())
-  name        String   @unique
+  name        RoleName @unique
   description String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -56,15 +56,15 @@ model Role {
 }
 
 model Permission {
-  id          String   @id @default(uuid())
-  name        String   @unique // users:read application:create
+  id          String         @id @default(uuid())
+  name        PermissionName @unique
   description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
 
   rolePermissions RolePermission[]
 
-  @@map("permission")
+  @@map("permissions")
 }
 
 model RolePermission {
@@ -116,4 +116,21 @@ enum AuthMethod {
   CREDENTIALS
   GOOGLE
   GITHUB
+}
+
+enum RoleName {
+  ADMIN
+  MODERATOR
+  SUPPORT
+  GUEST
+}
+
+enum PermissionName {
+  USER__READ
+  USER__EDIT
+  PERMISSION__ADD
+  PERMISSION__ASSIGN
+  ROLE__ASSIGN
+  TEST__MUTATION
+  TEST__READ
 }

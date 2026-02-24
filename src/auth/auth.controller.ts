@@ -42,11 +42,11 @@ export class AuthController {
   @UseGuards(new ValidationGuard(LoginDTO), LocalAuthGuard)
   @Post('login')
   async login(
-    @CurrentUser() user: User,
+    @CurrentUser() user: TokenPayload,
     @Res({ passthrough: true }) res: Response
   ) {
     const { accessToken, refreshToken, csrfToken } =
-      await this.authService.login(user)
+      await this.authService.login(user.sub)
     this.setTokenCookies(res, accessToken, refreshToken, csrfToken)
 
     return { message: 'Login' }
