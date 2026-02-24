@@ -1,7 +1,6 @@
 import {
   ConflictException,
   Injectable,
-  InternalServerErrorException,
   Logger,
   NotFoundException,
   UnauthorizedException
@@ -17,6 +16,7 @@ import { msToSeconds } from '../common/utils/time/ms-to-seconds.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { UserService } from '../user/user.service.js'
 import { RegisterDTO } from './dto/register.dto.js'
+import { PERMISSION } from './roles/constants/permissions.constants.js'
 import { ROLE } from './roles/constants/roles.constants.js'
 import { TokenPayload } from './types/token-payload.type.js'
 
@@ -66,7 +66,13 @@ export class AuthService {
       sub: user.id,
       roles: roles.map((role) => ({
         id: role.id,
-        name: role.name as ROLE
+        name: role.name as ROLE,
+        permissions: role.permissions.map((p) => {
+          return {
+            id: p.id,
+            name: p.name as PERMISSION
+          }
+        })
       }))
     }
 

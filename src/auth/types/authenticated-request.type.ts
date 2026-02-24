@@ -1,3 +1,5 @@
+import { TokenPayload } from './token-payload.type.js'
+
 interface AuthCookies {
   access_token?: string
   refresh_token?: string
@@ -5,4 +7,5 @@ interface AuthCookies {
 
 export interface AuthenticatedRequest extends Request {
   cookies: AuthCookies
+  user?: TokenPayload
 }

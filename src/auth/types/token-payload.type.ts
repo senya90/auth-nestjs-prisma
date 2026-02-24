@@ -1,3 +1,4 @@
+import { PERMISSION } from '../roles/constants/permissions.constants.js'
 import { ROLE } from '../roles/constants/roles.constants.js'
 
 export interface TokenPayload {
@@ -5,6 +6,10 @@ export interface TokenPayload {
   roles: {
     id: string
     name: ROLE
+    permissions: {
+      id: string
+      name: PERMISSION
+    }[]
   }[]
 }
 

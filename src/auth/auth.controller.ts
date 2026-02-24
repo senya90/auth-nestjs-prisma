@@ -10,7 +10,7 @@ import {
   UseGuards
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import type { Request, Response } from 'express'
+import type { Response } from 'express'
 
 import type { User } from '../__generated__/client.js'
 import { ValidationGuard } from '../common/guards/validation.guard.js'

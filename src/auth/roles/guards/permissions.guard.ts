@@ -1,8 +1,10 @@
-import { CanActivate, ExecutionContext } from '@nestjs/common'
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 
+import { AuthenticatedRequest } from '../../types/authenticated-request.type.js'
 import { PERMISSION, PERMISSIONS } from '../constants/permissions.constants.js'
 
+@Injectable()
 export class PermissionsGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
@@ -14,12 +16,14 @@ export class PermissionsGuard implements CanActivate {
 
     if (!requiredPermissions) return true
 
-    // todo: описать тип
-    // const { user } = context.switchToHttp().getRequest()
+    const { user } = context.switchToHttp().getRequest<AuthenticatedRequest>()
 
-    // вычислить по user.permissions
-    // return requiredRoles.some((role) => user?.roles?.includes(role))
+    const userPermissions = user?.roles.flatMap((role) =>
+      role.permissions.map((per) => per.name)
+    )
 
-    return false
+    return requiredPermissions.some((permission) =>
+      userPermissions?.includes(permission)
+    )
   }
 }

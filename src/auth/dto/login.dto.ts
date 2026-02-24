@@ -1,7 +1,6 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator'
 
 import { TEXT } from '../../common/constants/text.js'
-import { PASSWORD } from '../constants/password.constants.js'
 
 export class LoginDTO {
   @IsString({ message: TEXT.VALIDATION.BE.STRING })
@@ -11,8 +10,5 @@ export class LoginDTO {
 
   @IsString({ message: TEXT.VALIDATION.BE.STRING })
   @IsNotEmpty({ message: TEXT.VALIDATION.REQUIRED })
-  @MinLength(PASSWORD.VALIDATION.MIN_LENGTH, {
-    message: TEXT.VALIDATION.min(PASSWORD.VALIDATION.MIN_LENGTH)
-  })
   password: string
 }

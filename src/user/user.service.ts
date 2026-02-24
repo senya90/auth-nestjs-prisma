@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common'
 
 import type { User } from '../__generated__/client.js'
-import { ROLES } from '../auth/roles/constants/roles.constants.js'
+import { PERMISSION } from '../auth/roles/constants/permissions.constants.js'
+import { ROLE, ROLES } from '../auth/roles/constants/roles.constants.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { CreateUser } from './types/create-user.js'
 
@@ -16,55 +17,13 @@ export class UserService {
 
   async findById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({
-      where: { id },
-      include: {
-        accounts: true,
-        userRoles: {
-          select: {
-            role: {
-              select: {
-                name: true,
-                rolePermissions: {
-                  select: {
-                    permission: {
-                      select: {
-                        name: true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      where: { id }
     })
   }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({
-      where: { email },
-      include: {
-        accounts: true,
-        userRoles: {
-          select: {
-            role: {
-              select: {
-                name: true,
-                rolePermissions: {
-                  select: {
-                    permission: {
-                      select: {
-                        name: true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      where: { email }
     })
   }
 
@@ -105,15 +64,26 @@ export class UserService {
     })
   }
 
-  async getUserRoles(userId: string) {
-    const permissionData = await this.prisma.userRole.findMany({
+  async getUserRoles(
+    userId: string
+  ): Promise<
+    { id: string; name: string; permissions: { id: string; name: string }[] }[]
+  > {
+    const userRoles = await this.prisma.userRole.findMany({
       where: { userId },
-      include: {
+      select: {
         role: {
-          include: {
+          select: {
+            id: true,
+            name: true,
             rolePermissions: {
               select: {
-                permission: true
+                permission: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
               }
             }
           }
@@ -121,17 +91,14 @@ export class UserService {
       }
     })
 
-    return permissionData.map((role) => {
-      return {
-        id: role.roleId,
-        name: role.role.name,
-        description: role.role.description,
-        permissions: role.role.rolePermissions.map((permission) => ({
-          id: permission.permission.id,
-          name: permission.permission.name
-        }))
-      }
-    })
+    return userRoles.map((ur) => ({
+      id: ur.role.id,
+      name: ur.role.name as ROLE,
+      permissions: ur.role.rolePermissions.map((rp) => ({
+        id: rp.permission.id,
+        name: rp.permission.name as PERMISSION
+      }))
+    }))
   }
 
   async assignRole(

@@ -1,10 +1,11 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
-import { Request } from 'express'
 import { ExtractJwt, Strategy } from 'passport-jwt'
 
 import { UserService } from '../../user/user.service.js'
+import { PERMISSION } from '../roles/constants/permissions.constants.js'
+import { ROLE } from '../roles/constants/roles.constants.js'
 import { AuthenticatedRequest } from '../types/authenticated-request.type.js'
 import { TokenPayload, TokenPayloadFull } from '../types/token-payload.type.js'
 
@@ -25,18 +26,26 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     })
   }
 
-  async validate(payload: TokenPayloadFull) {
+  async validate(payload: TokenPayloadFull): Promise<TokenPayload> {
     const user = await this.userService.findById(payload.sub)
 
     if (!user) {
       throw new UnauthorizedException()
     }
 
+    const roles = await this.userService.getUserRoles(user.id)
+
     const tokenPayload: TokenPayload = {
-      sub: payload.sub,
-      roles: payload.roles.map((role) => ({
+      sub: user.id,
+      roles: roles.map((role) => ({
         id: role.id,
-        name: role.name
+        name: role.name as ROLE,
+        permissions: role.permissions.map((p) => {
+          return {
+            id: p.id,
+            name: p.name as PERMISSION
+          }
+        })
       }))
     }
 

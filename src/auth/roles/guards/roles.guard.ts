@@ -1,13 +1,10 @@
-import { CanActivate, ExecutionContext } from '@nestjs/common'
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 
-import { TokenPayload } from '../../types/token-payload.type.js'
+import { AuthenticatedRequest } from '../../types/authenticated-request.type.js'
 import { ROLE, ROLES } from '../constants/roles.constants.js'
 
-interface AuthenticatedRequest extends Request {
-  user: TokenPayload
-}
-
+@Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
@@ -19,9 +16,10 @@ export class RolesGuard implements CanActivate {
 
     if (!requiredRoles) return true
 
-    // todo: описать тип
-    const { user } = context.switchToHttp().getRequest()
+    const { user } = context.switchToHttp().getRequest<AuthenticatedRequest>()
 
-    return requiredRoles.some((role) => user?.roles?.includes(role))
+    return requiredRoles.some((role) =>
+      user?.roles?.find((r) => r.name === role)
+    )
   }
 }
