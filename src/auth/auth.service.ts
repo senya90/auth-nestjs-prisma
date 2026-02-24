@@ -53,7 +53,7 @@ export class AuthService {
 
   async login(
     user: User
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string; csrfToken: string }> {
     const roles = await this.userService.getUserRoles(user.id)
     const accessTTLMs = Number(
       this.configService.getOrThrow<number>('JWT_ACCESS_TTL')
@@ -81,7 +81,10 @@ export class AuthService {
       expiresIn: msToSeconds(accessTTLMs)
     })
 
-    const { refreshToken, refreshTokenHash } = this.generateRefreshToken()
+    const { token: refreshToken, tokenHash: refreshTokenHash } =
+      this.generateTokenWithHash()
+
+    const { tokenHash: csrfTokenHash } = this.generateTokenWithHash()
 
     await this.prisma.refreshToken.create({
       data: {
@@ -91,7 +94,7 @@ export class AuthService {
       }
     })
 
-    return { accessToken, refreshToken }
+    return { accessToken, refreshToken, csrfToken: csrfTokenHash }
   }
 
   async logout(userId: string, refreshToken: string): Promise<void> {
@@ -178,16 +181,16 @@ export class AuthService {
     })
   }
 
-  private generateRefreshToken(): {
-    refreshToken: string
-    refreshTokenHash: string
+  private generateTokenWithHash(): {
+    token: string
+    tokenHash: string
   } {
-    const refreshToken = randomBytes(64).toString('base64url')
-    const refreshTokenHash = this.hashCrypto(refreshToken)
+    const token = randomBytes(64).toString('base64url')
+    const tokenHash = this.hashCrypto(token)
 
     return {
-      refreshToken,
-      refreshTokenHash
+      token,
+      tokenHash
     }
   }
 }

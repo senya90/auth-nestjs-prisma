@@ -20,6 +20,7 @@ import { COOKIE_TYPE } from './constants/cookie-type.js'
 import { CurrentUser } from './decorators/current-user.decorator.js'
 import { LoginDTO } from './dto/login.dto.js'
 import { RegisterDTO } from './dto/register.dto.js'
+import { CsrfGuard } from './guards/csrf.guard.js'
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js'
 import { LocalAuthGuard } from './guards/local-auth.guard.js'
 import type { AuthenticatedRequest } from './types/authenticated-request.type.js'
@@ -44,8 +45,9 @@ export class AuthController {
     @CurrentUser() user: User,
     @Res({ passthrough: true }) res: Response
   ) {
-    const { accessToken, refreshToken } = await this.authService.login(user)
-    this.setTokenCookies(res, accessToken, refreshToken)
+    const { accessToken, refreshToken, csrfToken } =
+      await this.authService.login(user)
+    this.setTokenCookies(res, accessToken, refreshToken, csrfToken)
 
     return { message: 'Login' }
   }
@@ -64,11 +66,12 @@ export class AuthController {
 
     res.clearCookie(COOKIE_TYPE.ACCESS_TOKEN)
     res.clearCookie(COOKIE_TYPE.REFRESH_TOKEN)
+    res.clearCookie(COOKIE_TYPE.CSRF_TOKEN)
 
     return { message: 'Logout ' }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard)
   @Post('refresh')
   async refresh(
     @Req() req: AuthenticatedRequest,
@@ -80,10 +83,10 @@ export class AuthController {
       throw new UnauthorizedException('Refresh token not found')
     }
 
-    const { accessToken, refreshToken } =
+    const { accessToken, refreshToken, csrfToken } =
       await this.authService.refresh(oldRefreshToken)
 
-    this.setTokenCookies(res, accessToken, refreshToken)
+    this.setTokenCookies(res, accessToken, refreshToken, csrfToken)
 
     return { message: 'Tokens refreshed' }
   }
@@ -91,7 +94,8 @@ export class AuthController {
   private setTokenCookies(
     res: Response,
     accessToken: string,
-    refreshToken: string
+    refreshToken: string,
+    csrfToken: string
   ) {
     const ACCESS_TOKEN_TTL = Number(
       this.configService.getOrThrow<number>('JWT_ACCESS_TTL')
@@ -115,6 +119,14 @@ export class AuthController {
       secure: IS_PROD_ENV,
       sameSite: 'lax',
       path: '/auth/refresh',
+      maxAge: REFRESH_TOKEN_TTL + COOKIE_BUFFER
+    })
+
+    res.cookie(COOKIE_TYPE.CSRF_TOKEN, csrfToken, {
+      httpOnly: false,
+      secure: IS_PROD_ENV,
+      sameSite: 'lax',
+      path: '/',
       maxAge: REFRESH_TOKEN_TTL + COOKIE_BUFFER
     })
   }
