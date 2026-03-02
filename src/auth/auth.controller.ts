@@ -18,6 +18,7 @@ import { IS_PROD_ENV } from '../common/utils/is-dev.util.js'
 import { AuthService } from './auth.service.js'
 import { COOKIE_TYPE } from './constants/cookie-type.js'
 import { CurrentUser } from './decorators/current-user.decorator.js'
+import { LoggedUser } from './decorators/login-user.decorator.js'
 import { LoginDTO } from './dto/login.dto.js'
 import { RegisterDTO } from './dto/register.dto.js'
 import { CsrfGuard } from './guards/csrf.guard.js'
@@ -42,14 +43,14 @@ export class AuthController {
   @UseGuards(new ValidationGuard(LoginDTO), LocalAuthGuard)
   @Post('login')
   async login(
-    @CurrentUser() user: TokenPayload,
+    @LoggedUser() user: User,
     @Res({ passthrough: true }) res: Response
   ) {
     const { accessToken, refreshToken, csrfToken } =
-      await this.authService.login(user.sub)
+      await this.authService.login(user.id)
     this.setTokenCookies(res, accessToken, refreshToken, csrfToken)
 
-    return { message: 'Login' }
+    return { message: 'Login', userId: user.id }
   }
 
   @Post('logout')
@@ -88,7 +89,7 @@ export class AuthController {
 
     this.setTokenCookies(res, accessToken, refreshToken, csrfToken)
 
-    return { message: 'Tokens refreshed' }
+    return { message: 'Tokens refreshed', userId: req.user?.sub }
   }
 
   private setTokenCookies(

@@ -52,6 +52,8 @@ export class AuthService {
   async login(
     userId: string
   ): Promise<{ accessToken: string; refreshToken: string; csrfToken: string }> {
+    this.logger.log(`Login attempt, user: ${userId}`)
+
     const roles = await this.userService.getUserRoles(userId)
     const accessTTLMs = Number(
       this.configService.getOrThrow<number>('JWT_ACCESS_TTL')
@@ -83,6 +85,8 @@ export class AuthService {
       this.generateTokenWithHash()
 
     const { tokenHash: csrfTokenHash } = this.generateTokenWithHash()
+
+    this.logger.log(`Create refresh token. userId: ${userId}`)
 
     await this.prisma.refreshToken.create({
       data: {

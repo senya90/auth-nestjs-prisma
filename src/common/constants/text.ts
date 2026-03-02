@@ -1,7 +1,8 @@
 export const TEXT = {
   VALIDATION: {
     BE: {
-      STRING: 'Must be a string'
+      STRING: 'Must be a string',
+      ARRAY: 'Must be an array'
     },
     REQUIRED: 'Required field',
     EMAIL: {
