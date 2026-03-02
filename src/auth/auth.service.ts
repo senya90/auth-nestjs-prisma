@@ -13,6 +13,7 @@ import type { Request, Response } from 'express'
 
 import { AuthMethod, Password, User } from '../__generated__/client.js'
 import { msToSeconds } from '../common/utils/time/ms-to-seconds.js'
+import { sliceToken } from '../common/utils/token-slicer.util.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { UserService } from '../user/user.service.js'
 import { RegisterDTO } from './dto/register.dto.js'
@@ -84,9 +85,12 @@ export class AuthService {
     const { token: refreshToken, tokenHash: refreshTokenHash } =
       this.generateTokenWithHash()
 
-    const { tokenHash: csrfTokenHash } = this.generateTokenWithHash()
+    const { token: csrfToken } = this.generateTokenWithHash()
 
     this.logger.log(`Create refresh token. userId: ${userId}`)
+    this.logger.debug(`access: ${sliceToken(accessToken)}`)
+    this.logger.debug(`refreshToken: ${sliceToken(refreshToken)}`)
+    this.logger.debug(`csrfToken: ${sliceToken(csrfToken)}`)
 
     await this.prisma.refreshToken.create({
       data: {
@@ -96,7 +100,7 @@ export class AuthService {
       }
     })
 
-    return { accessToken, refreshToken, csrfToken: csrfTokenHash }
+    return { accessToken, refreshToken, csrfToken }
   }
 
   async logout(userId: string, refreshToken: string): Promise<void> {
@@ -129,21 +133,25 @@ export class AuthService {
   }
 
   async refresh(oldRefreshToken: string) {
+    this.logger.log(`Refresh for token: ${sliceToken(oldRefreshToken)}`)
+
     const hashed = this.hashCrypto(oldRefreshToken)
     const tokenRecord = await this.prisma.refreshToken.findUnique({
       where: { token: hashed }
     })
 
     if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
-      throw new UnauthorizedException('Invalid or expired refresh token')
+      const message = `Invalid or expired refresh token: ${sliceToken(oldRefreshToken)}`
+      this.logger.warn(message)
+      throw new UnauthorizedException(message)
     }
 
     const user = await this.userService.findById(tokenRecord.userId)
 
     if (!user) {
-      throw new NotFoundException(
-        'The user was not found when updating the token.'
-      )
+      const message = 'The user was not found when updating the token.'
+      this.logger.warn(message)
+      throw new NotFoundException(message)
     }
 
     await this.prisma.refreshToken.delete({

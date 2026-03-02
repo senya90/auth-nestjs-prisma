@@ -65,9 +65,7 @@ export class AuthController {
       await this.authService.logout(user.sub, refreshToken)
     }
 
-    res.clearCookie(COOKIE_TYPE.ACCESS_TOKEN)
-    res.clearCookie(COOKIE_TYPE.REFRESH_TOKEN)
-    res.clearCookie(COOKIE_TYPE.CSRF_TOKEN)
+    this.clearTokenCookies(res)
 
     return { message: 'Logout ' }
   }
@@ -112,6 +110,7 @@ export class AuthController {
       httpOnly: true,
       secure: IS_PROD_ENV,
       sameSite: 'lax',
+      path: '/',
       maxAge: ACCESS_TOKEN_TTL + COOKIE_BUFFER
     })
 
@@ -130,5 +129,11 @@ export class AuthController {
       path: '/',
       maxAge: REFRESH_TOKEN_TTL + COOKIE_BUFFER
     })
+  }
+
+  private clearTokenCookies(res: Response) {
+    res.clearCookie(COOKIE_TYPE.ACCESS_TOKEN)
+    res.clearCookie(COOKIE_TYPE.REFRESH_TOKEN)
+    res.clearCookie(COOKIE_TYPE.CSRF_TOKEN)
   }
 }

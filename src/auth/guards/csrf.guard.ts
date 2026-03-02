@@ -5,6 +5,8 @@ import {
   Injectable
 } from '@nestjs/common'
 
+import { sliceToken } from '../../common/utils/token-slicer.util.js'
+
 interface CsrfRequest extends Request {
   cookies: { csrf_token?: string }
 }
@@ -18,7 +20,9 @@ export class CsrfGuard implements CanActivate {
     const csrfHeader = request.headers['x-csrf-token']
 
     if (!csrfCookie || csrfCookie !== csrfHeader) {
-      throw new ForbiddenException('Invalid CSRF token')
+      throw new ForbiddenException(
+        `Invalid CSRF token. From cookie: ${sliceToken(csrfCookie)}. From header: ${sliceToken(csrfHeader)}`
+      )
     }
 
     return true
