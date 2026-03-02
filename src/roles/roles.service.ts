@@ -4,8 +4,8 @@ import {
   NotFoundException
 } from '@nestjs/common'
 
-import { PermissionName, RoleName } from '../../__generated__/enums.js'
-import { PrismaService } from '../../prisma/prisma.service.js'
+import { PermissionName, RoleName } from '../__generated__/enums.js'
+import { PrismaService } from '../prisma/prisma.service.js'
 import { AssignRolesDTO } from './dto/assign-roles.dto.js'
 
 @Injectable()

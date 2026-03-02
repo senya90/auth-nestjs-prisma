@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common'
 
 import type { PermissionName, RoleName, User } from '../__generated__/client.js'
-import { ROLES } from '../auth/roles/constants/roles.constants.js'
 import { PrismaService } from '../prisma/prisma.service.js'
+import { ROLES } from '../roles/constants/roles.constants.js'
 import { CreateUser } from './types/create-user.js'
 
 @Injectable()
@@ -63,9 +63,7 @@ export class UserService {
     })
   }
 
-  async getUserRoles(
-    userId: string
-  ): Promise<
+  async getUserRoles(userId: string): Promise<
     {
       id: string
       name: RoleName

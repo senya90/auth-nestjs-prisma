@@ -1,4 +1,4 @@
-import { PermissionName } from '../../../__generated__/enums.js'
+import { PermissionName } from '../../__generated__/enums.js'
 
 const PERMISSIONS_IDS: Record<keyof typeof PermissionName, string> = {
   USER__READ: 'f280bb72-6fe6-45b2-aa6f-481cca79f942',

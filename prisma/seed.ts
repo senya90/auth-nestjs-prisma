@@ -7,8 +7,8 @@ import {
   PrismaClient,
   RoleName
 } from '../src/__generated__/client.js'
-import { PERMISSIONS } from '../src/auth/roles/constants/permissions.constants.js'
-import { ROLES } from '../src/auth/roles/constants/roles.constants.js'
+import { PERMISSIONS } from '../src/roles/constants/permissions.constants.js'
+import { ROLES } from '../src/roles/constants/roles.constants.js'
 
 const adapter = new PrismaPg({
   connectionString: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`

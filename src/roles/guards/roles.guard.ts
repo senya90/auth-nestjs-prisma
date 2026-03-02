@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 
-import { RoleName } from '../../../__generated__/enums.js'
-import { AuthenticatedRequest } from '../../types/authenticated-request.type.js'
+import { RoleName } from '../../__generated__/enums.js'
+import { AuthenticatedRequest } from '../../auth/types/authenticated-request.type.js'
 import { ROLES } from '../constants/roles.constants.js'
 
 @Injectable()

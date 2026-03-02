@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator'
 
-import { RoleName } from '../../../__generated__/enums.js'
-import { TEXT } from '../../../common/constants/text.js'
+import { RoleName } from '../../__generated__/enums.js'
+import { TEXT } from '../../common/constants/text.js'
 import { ROLES } from '../constants/roles.constants.js'
 
 export class CreateRoleDTO {

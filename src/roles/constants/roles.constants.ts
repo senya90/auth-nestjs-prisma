@@ -1,4 +1,4 @@
-import { RoleName } from '../../../__generated__/enums.js'
+import { RoleName } from '../../__generated__/enums.js'
 
 const ROLES_IDS: Record<keyof typeof RoleName, string> = {
   ADMIN: '14b1064c-d524-4b64-af54-578cf761ac3e',

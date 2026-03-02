@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator'
 
-import { PermissionName } from '../../../__generated__/enums.js'
-import { TEXT } from '../../../common/constants/text.js'
+import { PermissionName } from '../../__generated__/enums.js'
+import { TEXT } from '../../common/constants/text.js'
 import { ROLES } from '../constants/roles.constants.js'
 
 export class CreatePermissionDTO {

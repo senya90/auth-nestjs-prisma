@@ -5,6 +5,7 @@ import { WinstonModule } from 'nest-winston'
 import { AuthModule } from './auth/auth.module.js'
 import { winstonConfig } from './logger/logger.config.js'
 import { PrismaModule } from './prisma/prisma.module.js'
+import { RolesModule } from './roles/roles.module.js'
 import { UserModule } from './user/user.module.js'
 
 @Module({
@@ -18,7 +19,8 @@ import { UserModule } from './user/user.module.js'
     }),
     PrismaModule,
     AuthModule,
-    UserModule
+    UserModule,
+    RolesModule
   ]
 })
 export class AppModule {}

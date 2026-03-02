@@ -8,8 +8,8 @@ import {
   UseGuards
 } from '@nestjs/common'
 
-import { CsrfGuard } from '../guards/csrf.guard.js'
-import { JwtAuthGuard } from '../guards/jwt-auth.guard.js'
+import { CsrfGuard } from '../auth/guards/csrf.guard.js'
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js'
 import { Roles } from './decorators/roles.decorator.js'
 import { AssignPermissionDTO } from './dto/assign-permission.dto.js'
 import { AssignRolesDTO } from './dto/assign-roles.dto.js'

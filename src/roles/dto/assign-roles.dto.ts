@@ -1,6 +1,6 @@
 import { IsArray, IsNotEmpty, IsString } from 'class-validator'
 
-import { TEXT } from '../../../common/constants/text.js'
+import { TEXT } from '../../common/constants/text.js'
 
 export class AssignRolesDTO {
   @IsArray({ message: TEXT.VALIDATION.BE.ARRAY })
