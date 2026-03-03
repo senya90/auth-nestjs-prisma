@@ -6,6 +6,7 @@ import {
 
 import { PermissionName, RoleName } from '../__generated__/enums.js'
 import { PrismaService } from '../prisma/prisma.service.js'
+import { AssignPermissionDTO } from './dto/assign-permission.dto.js'
 import { AssignRolesDTO } from './dto/assign-roles.dto.js'
 
 @Injectable()
@@ -30,7 +31,7 @@ export class RolesService {
     })
   }
 
-  async assignPermissionToRole(data: { roleId: string; permissionId: string }) {
+  async assignPermissionToRole(data: AssignPermissionDTO) {
     const { permissionId, roleId } = data
 
     const hasNow = await this.prisma.rolePermission.findUnique({
@@ -51,6 +52,21 @@ export class RolesService {
     return this.prisma.rolePermission.create({
       data: { roleId, permissionId }
     })
+  }
+
+  async revokePermissionForRole(data: AssignPermissionDTO) {
+    const { roleId, permissionId } = data
+
+    await this.prisma.rolePermission
+      .delete({
+        where: {
+          roleId_permissionId: {
+            permissionId,
+            roleId
+          }
+        }
+      })
+      .catch(() => {})
   }
 
   async assignRolesToUser(data: AssignRolesDTO) {

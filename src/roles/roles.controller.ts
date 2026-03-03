@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   HttpCode,
   HttpStatus,
   Post,
@@ -44,6 +45,14 @@ export class RolesController {
   @HttpCode(HttpStatus.OK)
   async assignPermission(@Body() dto: AssignPermissionDTO) {
     return await this.roleService.assignPermissionToRole(dto)
+  }
+
+  @Delete('revoke-permission')
+  @UseGuards(JwtAuthGuard, RolesGuard, CsrfGuard)
+  @Roles('ADMIN')
+  @HttpCode(HttpStatus.OK)
+  async revokePermission(@Body() dto: AssignPermissionDTO) {
+    await this.roleService.revokePermissionForRole(dto)
   }
 
   @Put('assign-roles')
