@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -22,9 +23,11 @@ import { LoggedUser } from './decorators/login-user.decorator.js'
 import { LoginDTO } from './dto/login.dto.js'
 import { RegisterDTO } from './dto/register.dto.js'
 import { CsrfGuard } from './guards/csrf.guard.js'
+import { GoogleOAuthGuard } from './guards/google-oauth.guard.js'
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js'
 import { LocalAuthGuard } from './guards/local-auth.guard.js'
 import type { AuthenticatedRequest } from './types/authenticated-request.type.js'
+import { GoogleProfile } from './types/google-profile.type.js'
 import type { TokenPayload } from './types/token-payload.type.js'
 
 @Controller('auth')
@@ -48,9 +51,28 @@ export class AuthController {
   ) {
     const { accessToken, refreshToken, csrfToken } =
       await this.authService.login(user.id)
-    this.setTokenCookies(res, accessToken, refreshToken, csrfToken)
+    this.setTokenCookies(res, { accessToken, refreshToken, csrfToken })
 
     return { message: 'Login', userId: user.id }
+  }
+
+  @Get('google')
+  @UseGuards(GoogleOAuthGuard)
+  async googleAuth() {}
+
+  @Get('google/callback')
+  @UseGuards(GoogleOAuthGuard)
+  async googleCallback(
+    @Req() req: Request & { user: GoogleProfile },
+    @Res() res: Response
+  ) {
+    const { accessToken, refreshToken, csrfToken } =
+      await this.authService.googleLogin(req.user)
+
+    this.setTokenCookies(res, { accessToken, refreshToken, csrfToken })
+
+    const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL')
+    res.redirect(frontendUrl)
   }
 
   @Post('logout')
@@ -85,16 +107,18 @@ export class AuthController {
     const { accessToken, refreshToken, csrfToken } =
       await this.authService.refresh(oldRefreshToken)
 
-    this.setTokenCookies(res, accessToken, refreshToken, csrfToken)
+    this.setTokenCookies(res, { accessToken, refreshToken, csrfToken })
 
     return { message: 'Tokens refreshed', userId: req.user?.sub }
   }
 
   private setTokenCookies(
     res: Response,
-    accessToken: string,
-    refreshToken: string,
-    csrfToken: string
+    tokens: {
+      accessToken: string
+      refreshToken: string
+      csrfToken: string
+    }
   ) {
     const ACCESS_TOKEN_TTL = Number(
       this.configService.getOrThrow<number>('JWT_ACCESS_TTL')
@@ -105,6 +129,8 @@ export class AuthController {
     const COOKIE_BUFFER = Number(
       this.configService.getOrThrow<number>('COOKIE_BUFFER')
     )
+
+    const { accessToken, refreshToken, csrfToken } = tokens
 
     res.cookie(COOKIE_TYPE.ACCESS_TOKEN, accessToken, {
       httpOnly: true,

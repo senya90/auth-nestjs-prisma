@@ -2,16 +2,20 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException
 } from '@nestjs/common'
 
 import type { PermissionName, RoleName, User } from '../__generated__/client.js'
+import { sliceToken } from '../common/utils/token-slicer.util.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { ROLES } from '../roles/constants/roles.constants.js'
 import { CreateUser } from './types/create-user.js'
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name)
+
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(id: string): Promise<User | null> {
@@ -63,6 +67,110 @@ export class UserService {
     })
   }
 
+  async findOrCreateOAuthUser(params: {
+    email: string
+    displayName: string
+    picture: string
+    provider: string
+    providerId: string
+    accessToken: string
+    refreshToken: string | null
+  }): Promise<User | null> {
+    const {
+      provider,
+      providerId,
+      accessToken,
+      refreshToken,
+      displayName,
+      email,
+      picture
+    } = params
+
+    this.logger.debug(
+      `Find or create OAuth user. provider: ${provider}, providerId: ${providerId}, email: ${email}`
+    )
+    const existingAccount = await this.prisma.account.findUnique({
+      where: { provider_providerId: { provider, providerId } },
+      include: { user: true }
+    })
+
+    if (existingAccount) {
+      this.logger.debug(`Existing account ${existingAccount.id}`)
+
+      await this.prisma.account.update({
+        where: { id: existingAccount.id },
+        data: {
+          accessToken,
+          refreshToken,
+          expiresAt: new Date(Date.now() + 3600 * 1000) // 1h
+        }
+      })
+
+      this.logger.log(
+        `Account has been updated ${existingAccount.id}. accessToken: ${sliceToken(accessToken)}, refreshToken: ${sliceToken(refreshToken)}`
+      )
+
+      return existingAccount.user
+    }
+
+    const existingUser = await this.findByEmail(email)
+
+    if (existingUser) {
+      this.logger.debug(`Existing user ${existingUser.id}`)
+
+      const acc = await this.prisma.account.create({
+        data: {
+          userId: existingUser.id,
+          provider,
+          providerId,
+          accessToken,
+          refreshToken,
+          expiresAt: new Date(Date.now() + 3600 * 1000)
+        }
+      })
+      this.logger.log(
+        `An account ${acc.id} was created for the user ${existingUser.id}. accessToken: ${sliceToken(acc.accessToken)}, refreshToken: ${sliceToken(acc.refreshToken)}`
+      )
+
+      return existingUser
+    }
+
+    const guestRole = await this.prisma.role.findUnique({
+      where: { id: ROLES.IDS.GUEST }
+    })
+
+    if (!guestRole) {
+      const message = 'Default role Guest not found'
+      this.logger.warn(message)
+      throw new NotFoundException(message)
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        displayName,
+        picture,
+        method: 'GOOGLE',
+        isVerified: true, // Google email verification
+        accounts: {
+          create: {
+            provider,
+            providerId,
+            accessToken,
+            refreshToken,
+            expiresAt: new Date(Date.now() + 3600 * 1000)
+          }
+        },
+        userRoles: {
+          create: { roleId: guestRole.id }
+        }
+      }
+    })
+
+    this.logger.log(`OAuth user ${user.id} was created. Provider: ${provider}`)
+    return user
+  }
+
   async getUserRoles(userId: string): Promise<
     {
       id: string
@@ -94,10 +202,10 @@ export class UserService {
 
     return userRoles.map((ur) => ({
       id: ur.role.id,
-      name: ur.role.name as RoleName,
+      name: ur.role.name,
       permissions: ur.role.rolePermissions.map((rp) => ({
         id: rp.permission.id,
-        name: rp.permission.name as PermissionName
+        name: rp.permission.name
       }))
     }))
   }

@@ -17,6 +17,7 @@ import { sliceToken } from '../common/utils/token-slicer.util.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { UserService } from '../user/user.service.js'
 import { RegisterDTO } from './dto/register.dto.js'
+import { GoogleProfile } from './types/google-profile.type.js'
 import { TokenPayload } from './types/token-payload.type.js'
 
 @Injectable()
@@ -101,6 +102,31 @@ export class AuthService {
     })
 
     return { accessToken, refreshToken, csrfToken }
+  }
+
+  async googleLogin(profile: GoogleProfile) {
+    const { accessToken, refreshToken, displayName, email, googleId, picture } =
+      profile
+
+    this.logger.verbose(`Google login ${email}, googleId: ${googleId}`)
+
+    const user = await this.userService.findOrCreateOAuthUser({
+      email,
+      displayName,
+      picture,
+      provider: 'google',
+      providerId: googleId,
+      accessToken,
+      refreshToken
+    })
+
+    if (!user) {
+      const message = `Google login. User not found. googleId: ${googleId}`
+      this.logger.warn(message)
+      throw new NotFoundException(message)
+    }
+
+    return this.login(user.id)
   }
 
   async logout(userId: string, refreshToken: string): Promise<void> {
