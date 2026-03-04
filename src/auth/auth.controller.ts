@@ -23,10 +23,12 @@ import { LoggedUser } from './decorators/login-user.decorator.js'
 import { LoginDTO } from './dto/login.dto.js'
 import { RegisterDTO } from './dto/register.dto.js'
 import { CsrfGuard } from './guards/csrf.guard.js'
+import { GithubOAuthGuard } from './guards/github-oauth.guard.js'
 import { GoogleOAuthGuard } from './guards/google-oauth.guard.js'
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js'
 import { LocalAuthGuard } from './guards/local-auth.guard.js'
 import type { AuthenticatedRequest } from './types/authenticated-request.type.js'
+import { GithubProfile } from './types/github-profile.type.js'
 import { GoogleProfile } from './types/google-profile.type.js'
 import type { TokenPayload } from './types/token-payload.type.js'
 
@@ -70,9 +72,24 @@ export class AuthController {
       await this.authService.googleLogin(req.user)
 
     this.setTokenCookies(res, { accessToken, refreshToken, csrfToken })
+    this.redirectToFrontend(res)
+  }
 
-    const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL')
-    res.redirect(frontendUrl)
+  @Get('github')
+  @UseGuards(GithubOAuthGuard)
+  async githubAuth() {}
+
+  @Get('github/callback')
+  @UseGuards(GithubOAuthGuard)
+  async githubCallback(
+    @Req() req: Request & { user: GithubProfile },
+    @Res() res: Response
+  ) {
+    const { accessToken, refreshToken, csrfToken } =
+      await this.authService.githubLogin(req.user)
+
+    this.setTokenCookies(res, { accessToken, refreshToken, csrfToken })
+    this.redirectToFrontend(res)
   }
 
   @Post('logout')
@@ -161,5 +178,10 @@ export class AuthController {
     res.clearCookie(COOKIE_TYPE.ACCESS_TOKEN)
     res.clearCookie(COOKIE_TYPE.REFRESH_TOKEN)
     res.clearCookie(COOKIE_TYPE.CSRF_TOKEN)
+  }
+
+  private redirectToFrontend(res: Response) {
+    const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL')
+    res.redirect(frontendUrl)
   }
 }

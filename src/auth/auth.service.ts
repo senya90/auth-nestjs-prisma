@@ -17,6 +17,7 @@ import { sliceToken } from '../common/utils/token-slicer.util.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { UserService } from '../user/user.service.js'
 import { RegisterDTO } from './dto/register.dto.js'
+import { GithubProfile } from './types/github-profile.type.js'
 import { GoogleProfile } from './types/google-profile.type.js'
 import { TokenPayload } from './types/token-payload.type.js'
 
@@ -35,7 +36,9 @@ export class AuthService {
     const user = await this.userService.findByEmail(dto.email)
 
     if (user) {
-      throw new ConflictException('A user with this email already exists.')
+      const message = 'A user with this email already exists'
+      this.logger.warn(message)
+      throw new ConflictException(message)
     }
 
     const { email, name, password } = dto
@@ -47,6 +50,8 @@ export class AuthService {
       method: 'CREDENTIALS',
       picture: ''
     })
+
+    this.logger.log(`User created. ${JSON.stringify(newUser)}`)
 
     return newUser
   }
@@ -108,9 +113,9 @@ export class AuthService {
     const { accessToken, refreshToken, displayName, email, googleId, picture } =
       profile
 
-    this.logger.verbose(`Google login ${email}, googleId: ${googleId}`)
+    this.logger.verbose(`Google login. email: ${email}, googleId: ${googleId}`)
 
-    const user = await this.userService.findOrCreateOAuthUser({
+    const user = await this.userService.findOrCreateOAuthUser('GOOGLE', {
       email,
       displayName,
       picture,
@@ -122,6 +127,27 @@ export class AuthService {
 
     if (!user) {
       const message = `Google login. User not found. googleId: ${googleId}`
+      this.logger.warn(message)
+      throw new NotFoundException(message)
+    }
+
+    return this.login(user.id)
+  }
+
+  async githubLogin(profile: GithubProfile) {
+    const { displayName, email, githubId, picture } = profile
+    this.logger.verbose(`Github login. email: ${email}, githubId: ${githubId}`)
+
+    const user = await this.userService.findOrCreateOAuthUser('GITHUB', {
+      email,
+      displayName,
+      picture,
+      provider: 'github',
+      providerId: githubId
+    })
+
+    if (!user) {
+      const message = `Github login. User not found. githubId: ${githubId}`
       this.logger.warn(message)
       throw new NotFoundException(message)
     }

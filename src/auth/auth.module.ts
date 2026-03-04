@@ -4,7 +4,9 @@ import { JwtService } from '@nestjs/jwt'
 import { UserModule } from '../user/user.module.js'
 import { AuthController } from './auth.controller.js'
 import { AuthService } from './auth.service.js'
+import { GithubOAuthGuard } from './guards/github-oauth.guard.js'
 import { GoogleOAuthGuard } from './guards/google-oauth.guard.js'
+import { GithubStrategy } from './strategies/github.strategy.js'
 import { GoogleStrategy } from './strategies/google.strategy.js'
 import { JwtStrategy } from './strategies/jwt.strategy.js'
 import { LocalStrategy } from './strategies/local.strategy.js'
@@ -18,7 +20,9 @@ import { LocalStrategy } from './strategies/local.strategy.js'
     JwtStrategy,
     JwtService,
     GoogleStrategy,
-    GoogleOAuthGuard
+    GoogleOAuthGuard,
+    GithubStrategy,
+    GithubOAuthGuard
   ]
 })
 export class AuthModule {}

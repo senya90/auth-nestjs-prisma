@@ -6,7 +6,12 @@ import {
   NotFoundException
 } from '@nestjs/common'
 
-import type { PermissionName, RoleName, User } from '../__generated__/client.js'
+import type {
+  AuthMethod,
+  PermissionName,
+  RoleName,
+  User
+} from '../__generated__/client.js'
 import { sliceToken } from '../common/utils/token-slicer.util.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { ROLES } from '../roles/constants/roles.constants.js'
@@ -31,9 +36,14 @@ export class UserService {
   }
 
   async create(params: CreateUser): Promise<User> {
+    const { passwordHash, ...userData } = params
+    this.logger.log(`Create user. ${JSON.stringify(userData)}`)
+
     const existingUser = await this.findByEmail(params.email)
     if (existingUser) {
-      throw new ConflictException('Email already exists')
+      const message = 'Email already exists'
+      this.logger.warn(message)
+      throw new ConflictException(message)
     }
 
     const guestRole = await this.prisma.role.findUnique({
@@ -41,10 +51,10 @@ export class UserService {
     })
 
     if (!guestRole) {
-      throw new NotFoundException('Default role Guest not found')
+      const message = 'Default role Guest not found'
+      this.logger.error(message)
+      throw new NotFoundException(message)
     }
-
-    const { passwordHash, ...userData } = params
 
     return await this.prisma.user.create({
       data: {
@@ -67,15 +77,18 @@ export class UserService {
     })
   }
 
-  async findOrCreateOAuthUser(params: {
-    email: string
-    displayName: string
-    picture: string
-    provider: string
-    providerId: string
-    accessToken: string
-    refreshToken: string | null
-  }): Promise<User | null> {
+  async findOrCreateOAuthUser(
+    authMethod: AuthMethod,
+    params: {
+      email: string
+      displayName: string
+      picture: string
+      provider: string
+      providerId: string
+      accessToken?: string
+      refreshToken?: string | null
+    }
+  ): Promise<User | null> {
     const {
       provider,
       providerId,
@@ -141,7 +154,7 @@ export class UserService {
 
     if (!guestRole) {
       const message = 'Default role Guest not found'
-      this.logger.warn(message)
+      this.logger.error(message)
       throw new NotFoundException(message)
     }
 
@@ -150,8 +163,8 @@ export class UserService {
         email,
         displayName,
         picture,
-        method: 'GOOGLE',
-        isVerified: true, // Google email verification
+        method: authMethod,
+        isVerified: true,
         accounts: {
           create: {
             provider,
