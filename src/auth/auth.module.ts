@@ -6,10 +6,12 @@ import { AuthController } from './auth.controller.js'
 import { AuthService } from './auth.service.js'
 import { GithubOAuthGuard } from './guards/github-oauth.guard.js'
 import { GoogleOAuthGuard } from './guards/google-oauth.guard.js'
+import { YandexOAuthGuard } from './guards/yandex-oauth.guard.js'
 import { GithubStrategy } from './strategies/github.strategy.js'
 import { GoogleStrategy } from './strategies/google.strategy.js'
 import { JwtStrategy } from './strategies/jwt.strategy.js'
 import { LocalStrategy } from './strategies/local.strategy.js'
+import { YandexStrategy } from './strategies/yandex.strategy.js'
 
 @Module({
   imports: [UserModule],
@@ -22,7 +24,9 @@ import { LocalStrategy } from './strategies/local.strategy.js'
     GoogleStrategy,
     GoogleOAuthGuard,
     GithubStrategy,
-    GithubOAuthGuard
+    GithubOAuthGuard,
+    YandexStrategy,
+    YandexOAuthGuard
   ]
 })
 export class AuthModule {}

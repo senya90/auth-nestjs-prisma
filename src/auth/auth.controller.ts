@@ -27,10 +27,12 @@ import { GithubOAuthGuard } from './guards/github-oauth.guard.js'
 import { GoogleOAuthGuard } from './guards/google-oauth.guard.js'
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js'
 import { LocalAuthGuard } from './guards/local-auth.guard.js'
+import { YandexOAuthGuard } from './guards/yandex-oauth.guard.js'
 import type { AuthenticatedRequest } from './types/authenticated-request.type.js'
 import { GithubProfile } from './types/github-profile.type.js'
 import { GoogleProfile } from './types/google-profile.type.js'
 import type { TokenPayload } from './types/token-payload.type.js'
+import { YandexProfile } from './types/yandex-profile.type.js'
 
 @Controller('auth')
 export class AuthController {
@@ -87,6 +89,23 @@ export class AuthController {
   ) {
     const { accessToken, refreshToken, csrfToken } =
       await this.authService.githubLogin(req.user)
+
+    this.setTokenCookies(res, { accessToken, refreshToken, csrfToken })
+    this.redirectToFrontend(res)
+  }
+
+  @Get('yandex')
+  @UseGuards(YandexOAuthGuard)
+  async yandexAuth() {}
+
+  @Get('yandex/callback')
+  @UseGuards(YandexOAuthGuard)
+  async yandexCallback(
+    @Req() req: Request & { user: YandexProfile },
+    @Res() res: Response
+  ) {
+    const { accessToken, refreshToken, csrfToken } =
+      await this.authService.yandexLogin(req.user)
 
     this.setTokenCookies(res, { accessToken, refreshToken, csrfToken })
     this.redirectToFrontend(res)

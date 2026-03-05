@@ -20,6 +20,7 @@ import { RegisterDTO } from './dto/register.dto.js'
 import { GithubProfile } from './types/github-profile.type.js'
 import { GoogleProfile } from './types/google-profile.type.js'
 import { TokenPayload } from './types/token-payload.type.js'
+import { YandexProfile } from './types/yandex-profile.type.js'
 
 @Injectable()
 export class AuthService {
@@ -148,6 +149,27 @@ export class AuthService {
 
     if (!user) {
       const message = `Github login. User not found. githubId: ${githubId}`
+      this.logger.warn(message)
+      throw new NotFoundException(message)
+    }
+
+    return this.login(user.id)
+  }
+
+  async yandexLogin(profile: YandexProfile) {
+    const { displayName, email, picture, yandexId } = profile
+    this.logger.verbose(`Yandex login. email: ${email}, yandexId: ${yandexId}`)
+
+    const user = await this.userService.findOrCreateOAuthUser('YANDEX', {
+      email,
+      displayName,
+      picture,
+      provider: 'yandex',
+      providerId: yandexId
+    })
+
+    if (!user) {
+      const message = `Yandex login. User not found. yandexId: ${yandexId}`
       this.logger.warn(message)
       throw new NotFoundException(message)
     }

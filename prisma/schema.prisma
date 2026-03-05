@@ -116,6 +116,7 @@ enum AuthMethod {
   CREDENTIALS
   GOOGLE
   GITHUB
+  YANDEX
 }
 
 enum RoleName {
