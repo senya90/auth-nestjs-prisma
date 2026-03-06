@@ -120,7 +120,7 @@ export class AuthService {
       email,
       displayName,
       picture,
-      provider: 'google',
+      provider: 'GOOGLE',
       providerId: googleId,
       accessToken,
       refreshToken
@@ -143,7 +143,7 @@ export class AuthService {
       email,
       displayName,
       picture,
-      provider: 'github',
+      provider: 'GITHUB',
       providerId: githubId
     })
 
@@ -164,7 +164,7 @@ export class AuthService {
       email,
       displayName,
       picture,
-      provider: 'yandex',
+      provider: 'YANDEX',
       providerId: yandexId
     })
 

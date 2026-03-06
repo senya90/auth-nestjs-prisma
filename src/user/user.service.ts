@@ -8,6 +8,7 @@ import {
 
 import type {
   AuthMethod,
+  OAuthProvider,
   PermissionName,
   RoleName,
   User
@@ -83,7 +84,7 @@ export class UserService {
       email: string
       displayName: string
       picture: string
-      provider: string
+      provider: OAuthProvider
       providerId: string
       accessToken?: string
       refreshToken?: string | null
@@ -102,6 +103,7 @@ export class UserService {
     this.logger.debug(
       `Find or create OAuth user. provider: ${provider}, providerId: ${providerId}, email: ${email}`
     )
+
     const existingAccount = await this.prisma.account.findUnique({
       where: { provider_providerId: { provider, providerId } },
       include: { user: true }
@@ -125,6 +127,7 @@ export class UserService {
 
       return existingAccount.user
     }
+    this.logger.debug('Existing account not found')
 
     const existingUser = await this.findByEmail(email)
 
@@ -147,6 +150,7 @@ export class UserService {
 
       return existingUser
     }
+    this.logger.debug('Existing user not found')
 
     const guestRole = await this.prisma.role.findUnique({
       where: { id: ROLES.IDS.GUEST }
