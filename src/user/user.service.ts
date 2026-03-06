@@ -115,8 +115,6 @@ export class UserService {
       await this.prisma.account.update({
         where: { id: existingAccount.id },
         data: {
-          accessToken,
-          refreshToken,
           expiresAt: new Date(Date.now() + 3600 * 1000) // 1h
         }
       })
@@ -139,13 +137,11 @@ export class UserService {
           userId: existingUser.id,
           provider,
           providerId,
-          accessToken,
-          refreshToken,
           expiresAt: new Date(Date.now() + 3600 * 1000)
         }
       })
       this.logger.log(
-        `An account ${acc.id} was created for the user ${existingUser.id}. accessToken: ${sliceToken(acc.accessToken)}, refreshToken: ${sliceToken(acc.refreshToken)}`
+        `An account ${acc.id} was created for the user ${existingUser.id}`
       )
 
       return existingUser
@@ -173,8 +169,6 @@ export class UserService {
           create: {
             provider,
             providerId,
-            accessToken,
-            refreshToken,
             expiresAt: new Date(Date.now() + 3600 * 1000)
           }
         },
