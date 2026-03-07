@@ -1,10 +1,14 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
+  NotFoundException,
   Post,
+  Query,
   Req,
   Res,
   UnauthorizedException,
@@ -16,6 +20,7 @@ import type { Response } from 'express'
 import type { User } from '../__generated__/client.js'
 import { ValidationGuard } from '../common/guards/validation.guard.js'
 import { IS_PROD_ENV } from '../common/utils/is-dev.util.js'
+import { UserService } from './../user/user.service.js'
 import { AuthService } from './auth.service.js'
 import { COOKIE_TYPE } from './constants/cookie-type.js'
 import { CurrentUser } from './decorators/current-user.decorator.js'
@@ -33,13 +38,33 @@ import { GithubProfile } from './types/github-profile.type.js'
 import { GoogleProfile } from './types/google-profile.type.js'
 import type { TokenPayload } from './types/token-payload.type.js'
 import { YandexProfile } from './types/yandex-profile.type.js'
+import { VerificationService } from './verification.service.js'
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name)
+  private readonly accessTokenTTL: number
+  private readonly refreshTokenTTL: number
+  private readonly cookieBufferTTL: number
+  private readonly frontendUrl: string
+
   constructor(
     private readonly authService: AuthService,
+    private readonly userService: UserService,
+    private readonly verificationService: VerificationService,
     private readonly configService: ConfigService
-  ) {}
+  ) {
+    this.accessTokenTTL = Number(
+      this.configService.getOrThrow<number>('JWT_ACCESS_TTL')
+    )
+    this.refreshTokenTTL = Number(
+      this.configService.getOrThrow<number>('JWT_REFRESH_TTL')
+    )
+    this.cookieBufferTTL = Number(
+      this.configService.getOrThrow<number>('COOKIE_BUFFER')
+    )
+    this.frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL')
+  }
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -148,6 +173,43 @@ export class AuthController {
     return { message: 'Tokens refreshed', userId: req.user?.sub }
   }
 
+  @Post('send-verification')
+  @UseGuards(JwtAuthGuard)
+  async sendVerification(@Req() req: AuthenticatedRequest) {
+    if (!req.user) {
+      const message = 'User not found in token'
+      this.logger.warn(message)
+      throw new NotFoundException(message)
+    }
+
+    const user = await this.userService.findById(req.user.sub)
+
+    if (!user) {
+      const message = 'User not found'
+      this.logger.warn(message)
+      throw new NotFoundException(message)
+    }
+
+    if (user.isVerified) {
+      const message = 'Email already verified'
+      this.logger.warn(message)
+      throw new BadRequestException(message)
+    }
+
+    await this.verificationService.sendVerificationEmail(user.id, user.email)
+
+    const message = 'Verification email sent'
+    this.logger.verbose(message)
+    return { message }
+  }
+
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string, @Res() res: Response) {
+    await this.verificationService.verifyEmail(token)
+
+    res.redirect(`${this.frontendUrl}/auth/email-verified`)
+  }
+
   private setTokenCookies(
     res: Response,
     tokens: {
@@ -156,16 +218,6 @@ export class AuthController {
       csrfToken: string
     }
   ) {
-    const ACCESS_TOKEN_TTL = Number(
-      this.configService.getOrThrow<number>('JWT_ACCESS_TTL')
-    )
-    const REFRESH_TOKEN_TTL = Number(
-      this.configService.getOrThrow<number>('JWT_REFRESH_TTL')
-    )
-    const COOKIE_BUFFER = Number(
-      this.configService.getOrThrow<number>('COOKIE_BUFFER')
-    )
-
     const { accessToken, refreshToken, csrfToken } = tokens
 
     res.cookie(COOKIE_TYPE.ACCESS_TOKEN, accessToken, {
@@ -173,7 +225,7 @@ export class AuthController {
       secure: IS_PROD_ENV,
       sameSite: 'lax',
       path: '/',
-      maxAge: ACCESS_TOKEN_TTL + COOKIE_BUFFER
+      maxAge: this.accessTokenTTL + this.cookieBufferTTL
     })
 
     res.cookie(COOKIE_TYPE.REFRESH_TOKEN, refreshToken, {
@@ -181,7 +233,7 @@ export class AuthController {
       secure: IS_PROD_ENV,
       sameSite: 'lax',
       path: '/auth/refresh',
-      maxAge: REFRESH_TOKEN_TTL + COOKIE_BUFFER
+      maxAge: this.refreshTokenTTL + this.cookieBufferTTL
     })
 
     res.cookie(COOKIE_TYPE.CSRF_TOKEN, csrfToken, {
@@ -189,7 +241,7 @@ export class AuthController {
       secure: IS_PROD_ENV,
       sameSite: 'lax',
       path: '/',
-      maxAge: REFRESH_TOKEN_TTL + COOKIE_BUFFER
+      maxAge: this.refreshTokenTTL + this.cookieBufferTTL
     })
   }
 
@@ -200,7 +252,6 @@ export class AuthController {
   }
 
   private redirectToFrontend(res: Response) {
-    const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL')
-    res.redirect(frontendUrl)
+    res.redirect(this.frontendUrl)
   }
 }

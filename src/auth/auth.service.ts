@@ -7,9 +7,6 @@ import {
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
-import bcrypt from 'bcrypt'
-import { createHash, randomBytes } from 'crypto'
-import type { Request, Response } from 'express'
 
 import { AuthMethod, Password, User } from '../__generated__/client.js'
 import { msToSeconds } from '../common/utils/time/ms-to-seconds.js'
@@ -17,6 +14,7 @@ import { sliceToken } from '../common/utils/token-slicer.util.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { UserService } from '../user/user.service.js'
 import { RegisterDTO } from './dto/register.dto.js'
+import { HashGeneratorService } from './hash-generator.service.js'
 import { GithubProfile } from './types/github-profile.type.js'
 import { GoogleProfile } from './types/google-profile.type.js'
 import { TokenPayload } from './types/token-payload.type.js'
@@ -30,7 +28,8 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly hashGeneratorService: HashGeneratorService
   ) {}
 
   async register(dto: RegisterDTO): Promise<User> {
@@ -46,7 +45,9 @@ export class AuthService {
     const newUser = await this.userService.create({
       email,
       displayName: name,
-      passwordHash: password ? await this.hashPassword(password) : '',
+      passwordHash: password
+        ? await this.hashGeneratorService.hashByRounds(password)
+        : '',
       isVerified: false,
       method: 'CREDENTIALS',
       picture: ''
@@ -90,9 +91,10 @@ export class AuthService {
     })
 
     const { token: refreshToken, tokenHash: refreshTokenHash } =
-      this.generateTokenWithHash()
+      this.hashGeneratorService.generateTokenWithHash()
 
-    const { token: csrfToken } = this.generateTokenWithHash()
+    const { token: csrfToken } =
+      this.hashGeneratorService.generateTokenWithHash()
 
     this.logger.log(`Create refresh token. userId: ${userId}`)
     this.logger.debug(`access: ${sliceToken(accessToken)}`)
@@ -178,7 +180,7 @@ export class AuthService {
   }
 
   async logout(userId: string, refreshToken: string): Promise<void> {
-    const hashed = this.hashCrypto(refreshToken)
+    const hashed = this.hashGeneratorService.hashCrypto(refreshToken)
 
     await this.prisma.refreshToken.deleteMany({
       where: {
@@ -197,7 +199,7 @@ export class AuthService {
     const userPassword = await this.getUserPassword(user.id)
     if (!userPassword?.passwordHash) return null
 
-    const isMatch = await this.validatePassword(
+    const isMatch = await this.hashGeneratorService.validateRoundedHash(
       password,
       userPassword.passwordHash
     )
@@ -209,7 +211,7 @@ export class AuthService {
   async refresh(oldRefreshToken: string) {
     this.logger.log(`Refresh for token: ${sliceToken(oldRefreshToken)}`)
 
-    const hashed = this.hashCrypto(oldRefreshToken)
+    const hashed = this.hashGeneratorService.hashCrypto(oldRefreshToken)
     const tokenRecord = await this.prisma.refreshToken.findUnique({
       where: { token: hashed }
     })
@@ -235,46 +237,9 @@ export class AuthService {
     return this.login(user.id)
   }
 
-  private hashPassword(password: string): Promise<string> {
-    const saltRounds = Number(
-      this.configService.getOrThrow<number>('SALT_ROUNDS')
-    )
-
-    return bcrypt.hash(password, saltRounds)
-  }
-
-  private hashCrypto(value: string): string {
-    const alrogithm =
-      this.configService.getOrThrow<string>('CRYPTO_ALGORITHM') ?? 'sha256'
-
-    return createHash(alrogithm).update(value).digest('hex')
-  }
-
-  private async validatePassword(
-    password: string,
-    hash: string | undefined | null
-  ): Promise<boolean> {
-    if (!hash) return false
-
-    return bcrypt.compare(password, hash)
-  }
-
   private async getUserPassword(userId: string): Promise<Password | null> {
     return this.prisma.password.findUnique({
       where: { userId }
     })
-  }
-
-  private generateTokenWithHash(): {
-    token: string
-    tokenHash: string
-  } {
-    const token = randomBytes(64).toString('base64url')
-    const tokenHash = this.hashCrypto(token)
-
-    return {
-      token,
-      tokenHash
-    }
   }
 }

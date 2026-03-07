@@ -17,10 +17,11 @@ model User {
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
-  accounts      Account[]
-  userRoles     UserRole[]
-  refreshTokens RefreshToken[]
-  password      Password?
+  accounts           Account[]
+  userRoles          UserRole[]
+  refreshTokens      RefreshToken[]
+  password           Password?
+  verificationTokens VerificationToken[]
 
   @@map("users")
 }
@@ -108,6 +109,19 @@ model Password {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("passwords")
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique
+  revoked   Boolean  @default(false)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("verification_tokens")
 }
 
 enum AuthMethod {
