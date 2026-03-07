@@ -1,4 +1,4 @@
-import { ValidationPipe } from '@nestjs/common'
+import { RequestMethod, ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 // import { RedisStore } from 'connect-redis'
@@ -20,6 +20,9 @@ async function bootstrap() {
 
   // const redis = new IORedis(config.getOrThrow('REDIS_URI'))
 
+  app.setGlobalPrefix('api', {
+    exclude: [{ path: 'health', method: RequestMethod.GET }]
+  })
   app.use(cookieParser(config.getOrThrow<string>('COOKIE_SECRET')))
   app.useGlobalPipes(
     new ValidationPipe({
