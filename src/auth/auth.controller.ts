@@ -174,7 +174,7 @@ export class AuthController {
   }
 
   @Post('send-verification')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard)
   async sendVerification(@Req() req: AuthenticatedRequest) {
     if (!req.user) {
       const message = 'User not found in token'
@@ -232,7 +232,7 @@ export class AuthController {
       httpOnly: true,
       secure: IS_PROD_ENV,
       sameSite: 'lax',
-      path: '/auth/refresh',
+      path: '/api/auth/refresh',
       maxAge: this.refreshTokenTTL + this.cookieBufferTTL
     })
 
