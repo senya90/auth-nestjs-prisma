@@ -42,14 +42,14 @@ export class VerificationService {
     )
     await this.mailService.sendEmail({
       to: mailToAddress,
-      textMessage
+      message: textMessage
     })
     this.logger.log(
       `Verification email sent to ${mailToAddress}, token: ${sliceToken(token)}`
     )
   }
 
-  async verifyEmail(token: string) {
+  async verifyEmail(token: string): Promise<boolean> {
     const tokenHash = this.hashGeneratorService.hashCrypto(token)
 
     const tokenRecord = await this.prisma.verificationToken.findUnique({
@@ -95,5 +95,7 @@ export class VerificationService {
 
       this.logger.log(`User ${tokenRecord.userId} verified email`)
     })
+
+    return true
   }
 }

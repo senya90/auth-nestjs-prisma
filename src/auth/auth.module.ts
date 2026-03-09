@@ -9,6 +9,7 @@ import { GithubOAuthGuard } from './guards/github-oauth.guard.js'
 import { GoogleOAuthGuard } from './guards/google-oauth.guard.js'
 import { YandexOAuthGuard } from './guards/yandex-oauth.guard.js'
 import { HashGeneratorService } from './hash-generator.service.js'
+import { PasswordResetService } from './password-reset.service.js'
 import { GithubStrategy } from './strategies/github.strategy.js'
 import { GoogleStrategy } from './strategies/google.strategy.js'
 import { JwtStrategy } from './strategies/jwt.strategy.js'
@@ -32,7 +33,8 @@ import { VerificationService } from './verification.service.js'
     YandexOAuthGuard,
     VerificationService,
     HashGeneratorService,
-    MailService
+    MailService,
+    PasswordResetService
   ]
 })
 export class AuthModule {}

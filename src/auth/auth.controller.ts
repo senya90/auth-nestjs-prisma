@@ -25,14 +25,17 @@ import { AuthService } from './auth.service.js'
 import { COOKIE_TYPE } from './constants/cookie-type.js'
 import { CurrentUser } from './decorators/current-user.decorator.js'
 import { LoggedUser } from './decorators/login-user.decorator.js'
+import { ForgotPasswordDTO } from './dto/forgot-password.dto.js'
 import { LoginDTO } from './dto/login.dto.js'
 import { RegisterDTO } from './dto/register.dto.js'
+import { ResetPasswordDTO } from './dto/reset-password.dto.js'
 import { CsrfGuard } from './guards/csrf.guard.js'
 import { GithubOAuthGuard } from './guards/github-oauth.guard.js'
 import { GoogleOAuthGuard } from './guards/google-oauth.guard.js'
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js'
 import { LocalAuthGuard } from './guards/local-auth.guard.js'
 import { YandexOAuthGuard } from './guards/yandex-oauth.guard.js'
+import { PasswordResetService } from './password-reset.service.js'
 import type { AuthenticatedRequest } from './types/authenticated-request.type.js'
 import { GithubProfile } from './types/github-profile.type.js'
 import { GoogleProfile } from './types/google-profile.type.js'
@@ -52,7 +55,8 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly verificationService: VerificationService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly passwordResetService: PasswordResetService
   ) {
     this.accessTokenTTL = Number(
       this.configService.getOrThrow<number>('JWT_ACCESS_TTL')
@@ -204,10 +208,25 @@ export class AuthController {
   }
 
   @Get('verify-email')
-  async verifyEmail(@Query('token') token: string, @Res() res: Response) {
+  async verifyEmail(@Query('token') token: string) {
     await this.verificationService.verifyEmail(token)
 
-    res.redirect(`${this.frontendUrl}/auth/email-verified`)
+    return { message: true }
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() dto: ForgotPasswordDTO) {
+    await this.passwordResetService.forgotPassword(dto)
+
+    return { message: 'If this email exists, you will receive a reset link' }
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() dto: ResetPasswordDTO) {
+    await this.passwordResetService.resetPassword(dto)
+    return { message: 'Password has been reset successfully' }
   }
 
   private setTokenCookies(
