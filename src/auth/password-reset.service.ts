@@ -63,14 +63,15 @@ export class PasswordResetService {
       }
     })
 
-    const resetUrl = `${this.frontendUrl}/auth/reset-password?token=${token}`
+    const resetUrl = `Confirm reset password by following the link ${this.frontendUrl}/auth/reset-password?token=${token}`
     this.logger.debug(
-      `Password reset token: ${sliceToken(token)}, hash: ${sliceToken(tokenHash)}`
+      `Password reset token: ${token} ${sliceToken(token)}, hash: ${sliceToken(tokenHash)}`
     )
+    this.logger.verbose(`resetUrl: ${resetUrl}`)
 
     await this.mailService.sendEmail({
       to: user.email,
-      textMessage: resetUrl,
+      message: resetUrl,
       subject: 'Reset password'
     })
 

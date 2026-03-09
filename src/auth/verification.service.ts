@@ -42,7 +42,7 @@ export class VerificationService {
     )
     await this.mailService.sendEmail({
       to: mailToAddress,
-      textMessage
+      message: textMessage
     })
     this.logger.log(
       `Verification email sent to ${mailToAddress}, token: ${sliceToken(token)}`
