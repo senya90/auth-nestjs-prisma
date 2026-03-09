@@ -40,6 +40,7 @@ export class VerificationService {
     this.logger.debug(
       `Attempt to send an email. To ${mailToAddress}, token: ${sliceToken(token)}`
     )
+    this.logger.verbose(`token: ${token}`)
     await this.mailService.sendEmail({
       to: mailToAddress,
       textMessage
@@ -49,7 +50,7 @@ export class VerificationService {
     )
   }
 
-  async verifyEmail(token: string) {
+  async verifyEmail(token: string): Promise<boolean> {
     const tokenHash = this.hashGeneratorService.hashCrypto(token)
 
     const tokenRecord = await this.prisma.verificationToken.findUnique({
@@ -95,5 +96,7 @@ export class VerificationService {
 
       this.logger.log(`User ${tokenRecord.userId} verified email`)
     })
+
+    return true
   }
 }

@@ -204,10 +204,10 @@ export class AuthController {
   }
 
   @Get('verify-email')
-  async verifyEmail(@Query('token') token: string, @Res() res: Response) {
+  async verifyEmail(@Query('token') token: string) {
     await this.verificationService.verifyEmail(token)
 
-    res.redirect(`${this.frontendUrl}/auth/email-verified`)
+    return { message: true }
   }
 
   private setTokenCookies(

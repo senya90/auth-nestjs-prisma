@@ -15,14 +15,18 @@ export class MailService {
       this.configService.getOrThrow<string>('MAIL_SERVICE_URL')
   }
 
-  async sendEmail(params: { to: string; textMessage: string }) {
-    const { to, textMessage } = params
+  async sendEmail(params: {
+    to: string
+    textMessage: string
+    subject?: string
+  }) {
+    const { to, textMessage, subject = 'Email verification' } = params
     this.logger.log(`Sending email to ${to}`)
 
     const response = await fetch(`${this.mailServiceUrl}/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, message: textMessage })
+      body: JSON.stringify({ to, message: textMessage, subject })
     })
 
     if (!response.ok) {
