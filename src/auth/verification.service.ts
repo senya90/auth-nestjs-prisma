@@ -40,7 +40,6 @@ export class VerificationService {
     this.logger.debug(
       `Attempt to send an email. To ${mailToAddress}, token: ${sliceToken(token)}`
     )
-    this.logger.verbose(`token: ${token}`)
     await this.mailService.sendEmail({
       to: mailToAddress,
       textMessage
